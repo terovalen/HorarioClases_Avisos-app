@@ -2,6 +2,7 @@
 export type RootParamList = {
   Login: undefined;
   Tabs: undefined;
+  Carga: undefined;
   NuevaMateria: { id?: string; bloque?: string } | undefined;
 };
 
