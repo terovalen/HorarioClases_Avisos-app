@@ -98,6 +98,27 @@ si no se entiende, no se entrega.
   una vez; (4) `FormularioEdicionBloque` es un nuevo componente que precarga
   todos los valores del bloque existente.
 
+## Entrada 6 · 2026-11-17 · Edicion completa desde menu y gestion de materias
+
+- **Propósito:** corregir que al pulsar «Editar bloque completo» no se abriera
+  el formulario (el flujo estaba invertido: el menú cerraba antes de abrir el
+  formulario), y agregar la posibilidad de editar y borrar materias existentes
+  desde una pantalla dedicada.
+- **Evidencia:** al pulsar «Editar bloque completo» el menú se cerraba y no
+  aparecía ningún formulario; no había forma de editar o borrar una materia
+  ya creada.
+- **Validación:** `npm run check` en verde (82 pruebas, typecheck + lint +
+  formato + pruebas).
+- **Decisión:** (1) el menú de long-press ya no llama a `alEditarBloque`
+  directamente; solo establece el bloque en `bloqueEditando` y cierra el
+  menú, y `FormularioEdicionBloque` se encarga de llamar a `editarBloque`
+  al guardar; (2) nueva pantalla `Materias` accesible desde Ajustes
+  («📚 Gestionar materias») que lista todas las materias y permite dejar
+  presionada cualquiera para editar sus datos (nombre, docente, salón, color)
+  o eliminarla con sus bloques; (3) nuevas funciones `editarMateria` y
+  `eliminarMateria` en `use-acciones-semana.ts` con validación de nombre
+  duplicado.
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
