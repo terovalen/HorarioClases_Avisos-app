@@ -1,12 +1,8 @@
 /** URL de la API. No es secreta: todo lo que empieza por EXPO_PUBLIC_
  *  queda dentro del APK y cualquiera puede leerlo. */
 export function apiUrl(): string {
-  const url = process.env.EXPO_PUBLIC_API_URL;
-  if (!url) {
-    throw new Error(
-      'Configura EXPO_PUBLIC_API_URL (copia env.example a .env con la URL de tu API en Vercel).',
-    );
-  }
+  // URL fija para evitar problemas con EXPO_PUBLIC_API_URL en iOS
+  const url = 'https://horario-clases-avisos-api.vercel.app';
   const normalizada = url.replace(/\/$/, '');
   // eslint-disable-next-line no-console
   console.log(`[API] URL resuelta: ${normalizada}`);

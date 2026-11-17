@@ -56,18 +56,26 @@ export function abrirBase(): SQLite.SQLiteDatabase {
 }
 
 /** Migración por versión: crea todas las tablas si faltan (idempotente).
- *  Se ejecuta en cada apertura para recuperar bases de datos dañadas. */
+ *  Se ejecuta en cada apertura para recuperar bases de datos dañadas.
+ *  En iOS, ejecuta cada sentencia en su propia transacción para asegurar persistencia. */
 function migrar(db: SQLite.SQLiteDatabase): void {
+  // En iOS, los PRAGMAs y CREATE TABLE pueden necesitar transacción explícita
+  try {
+    db.execSync('PRAGMA journal_mode = WAL;');
+  } catch {
+    // Si WAL falla, continúa sin él
+  }
   try {
     db.execSync('PRAGMA foreign_keys = ON;');
   } catch {
-    // PRAGMA puede fallar en algunos dispositivos; no bloquea.
+    // Si foreign_keys falla, continúa
   }
   for (const sentencia of ESQUEMA_TABLAS) {
     try {
-      db.execSync(sentencia);
+      // En iOS, ejecutar cada CREATE TABLE en su propia transacción asegura persistencia
+      db.execSync(`BEGIN IMMEDIATE TRANSACTION; ${sentencia}; COMMIT;`);
     } catch {
-      // Cada CREATE TABLE IF NOT EXISTS es independiente; una falla no detiene las demás.
+      // Cada CREATE TABLE es independiente; una falla no detiene las demás
     }
   }
 }
