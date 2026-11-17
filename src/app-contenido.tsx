@@ -1,6 +1,6 @@
 /** Contenido de la app dentro de ProveedorSesion: navegación con react-navigation.
- *  Login si no hay sesión; Tabs (Hoy, Semana, Ajustes) si hay sesión.
- *  NuevaMateria se abre como pantalla del stack desde cualquiera de las pestañas. */
+ *  Stack principal con Login, Tabs (Hoy, Semana, Ajustes) y NuevaMateria.
+ *  El flujo de auth se maneja dentro de cada pantalla con useEffect. */
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -56,14 +56,7 @@ function PantallaTabs(): ReactElement {
   );
 }
 
-/** Pantalla de carga mientras se resuelve la sesión. */
-function PantallaCarga(): ReactElement {
-  return <EstadoCarga estado="cargando" />;
-}
-
 export function AppContenido(): ReactElement {
-  const { usuario, cargando } = useSesion();
-
   useEffect(() => {
     Notificaciones.setNotificationHandler({
       handleNotification: async () => ({
@@ -75,16 +68,20 @@ export function AppContenido(): ReactElement {
     });
   }, []);
 
+  const { usuario, cargando } = useSesion();
+
+  if (cargando) {
+    return <EstadoCarga estado="cargando" />;
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {cargando ? (
-          <Stack.Screen name="Carga" component={PantallaCarga} />
-        ) : !usuario ? (
-          <Stack.Screen name="Login" component={PantallaLogin} />
-        ) : (
-          <Stack.Screen name="Tabs" component={PantallaTabs} />
-        )}
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={usuario ? 'Tabs' : 'Login'}
+      >
+        <Stack.Screen name="Login" component={PantallaLogin} />
+        <Stack.Screen name="Tabs" component={PantallaTabs} />
         <Stack.Screen
           name="NuevaMateria"
           component={PantallaNuevaMateria}
