@@ -149,6 +149,10 @@ function TarjetaBloque({
           {clase.materia.nombre}
         </Text>
         <Text style={styles.subtitulo}>
+          {clase.materia.docente ? `· ${clase.materia.docente}` : ''}
+          {clase.materia.salon ? ` · Salón ${clase.materia.salon}` : ''}
+        </Text>
+        <Text style={styles.horas}>
           {clase.bloque.hora_inicio}–{clase.bloque.hora_fin}
         </Text>
       </Pressable>
@@ -238,6 +242,7 @@ const styles = StyleSheet.create({
   },
   titulo: { color: '#fff', fontWeight: '800', fontSize: 13 },
   subtitulo: { color: '#eff6ff', fontSize: 11 },
+  horas: { color: '#eff6ff', fontSize: 10, marginTop: 2 },
   manija: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 16 },
   barraManija: {
     height: 4,

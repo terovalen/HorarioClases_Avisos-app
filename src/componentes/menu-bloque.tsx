@@ -1,15 +1,15 @@
-/** Menú de un bloque (alternativa por botón a los gestos): editar la hora de
- *  inicio y fin de forma manual, ajustar el fin en pasos de 30 minutos o
+/** Menú de un bloque (alternativa por botón a los gestos): editar todo el
+ *  bloque (materia, horas, docente, salón, color), ajustar el fin o
  *  eliminar el bloque. */
 import { useState, type ReactElement } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatearHora, minutosAHora, minutosDelDia, parseHora } from '../logica/tiempo';
-import type { Bloque } from '../logica/tipos';
-import type { Resultado } from '../hooks/use-semana';
+import type { BloqueConMateria } from '../logica/tipos';
+import type { DatosEdicion, Resultado } from '../hooks/use-semana';
 import { EditorHoras } from './editor-horas';
 
 type Props = {
-  bloque: Bloque | null;
+  bloque: BloqueConMateria | null;
   alEliminar: (id: string) => Promise<void>;
   alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>;
   alEditarHoras: (
@@ -17,6 +17,7 @@ type Props = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
+  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>;
   alCerrar: () => void;
 };
 
@@ -86,6 +87,7 @@ function PanelEdicion(props: {
 /** Acciones rápidas del menú. */
 function AccionesRapidas(props: {
   alAbrirEditor: () => void;
+  alAbrirEdicionCompleta: () => void;
   alCambiarFinDelta: (delta: number) => void;
   alEliminar: () => void;
 }): ReactElement {
@@ -95,6 +97,11 @@ function AccionesRapidas(props: {
         texto="✏️ Editar hora (exacta)"
         etiqueta="Editar la hora de inicio y de fin"
         alPulsar={props.alAbrirEditor}
+      />
+      <BotonAccion
+        texto="✏️ Editar bloque completo"
+        etiqueta="Editar materia, horas, docente, salón y color"
+        alPulsar={props.alAbrirEdicionCompleta}
       />
       <BotonAccion
         texto="Fin +30 min"
@@ -125,9 +132,9 @@ function useEstadoMenu() {
   return { errores, setErrores, editando, setEditando, inicio, setInicio, fin, setFin };
 }
 
-/** Acciones del menú sobre el bloque seleccionado. */
-function useAccionesMenu(
-  bloque: Bloque | null,
+/** Acciones de cambiar fin y editar horas. */
+function useAccionesHoras(
+  bloque: BloqueConMateria | null,
   estado: ReturnType<typeof useEstadoMenu>,
   alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>,
   alEditarHoras: (
@@ -135,15 +142,17 @@ function useAccionesMenu(
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>,
-  alEliminar: (id: string) => Promise<void>,
   alCerrar: () => void,
 ) {
   const { setErrores, setInicio, setFin, setEditando } = estado;
 
   const cambiarFin = async (delta: number): Promise<void> => {
     if (!bloque) return;
-    const actual = minutosDelDia(parseHora(bloque.hora_fin) ?? { h: 0, m: 0 });
-    const r = await alAjustarFin(bloque.id, formatearHora(minutosAHora(actual + delta)));
+    const actual = minutosDelDia(parseHora(bloque.bloque.hora_fin) ?? { h: 0, m: 0 });
+    const r = await alAjustarFin(
+      bloque.bloque.id,
+      formatearHora(minutosAHora(actual + delta)),
+    );
     if (!r.ok) setErrores(r.errores);
     else alCerrar();
   };
@@ -151,14 +160,18 @@ function useAccionesMenu(
   const abrirEditor = (): void => {
     if (!bloque) return;
     setErrores([]);
-    setInicio(bloque.hora_inicio);
-    setFin(bloque.hora_fin);
+    setInicio(bloque.bloque.hora_inicio);
+    setFin(bloque.bloque.hora_fin);
     setEditando(true);
   };
 
   const guardarHoras = async (): Promise<void> => {
     if (!bloque) return;
-    const r = await alEditarHoras(bloque.id, estado.inicio.trim(), estado.fin.trim());
+    const r = await alEditarHoras(
+      bloque.bloque.id,
+      estado.inicio.trim(),
+      estado.fin.trim(),
+    );
     if (!r.ok) {
       setErrores(r.errores);
       return;
@@ -166,13 +179,93 @@ function useAccionesMenu(
     alCerrar();
   };
 
-  const eliminarActual = (): void => {
+  return { cambiarFin, abrirEditor, guardarHoras };
+}
+
+/** Acción de edición completa del bloque. */
+function useAccionEdicionCompleta(
+  bloque: BloqueConMateria | null,
+  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>,
+  alCerrar: () => void,
+) {
+  const abrirEdicionCompleta = (): void => {
     if (!bloque) return;
-    setErrores([]);
-    void alEliminar(bloque.id).then(alCerrar);
+    void alEditarBloque({
+      id: bloque.bloque.id,
+      dia: bloque.bloque.dia,
+      hora_inicio: bloque.bloque.hora_inicio,
+      hora_fin: bloque.bloque.hora_fin,
+      materia_id: bloque.bloque.materia_id,
+      nombre: bloque.materia.nombre,
+      docente: bloque.materia.docente,
+      salon: bloque.materia.salon,
+      color: bloque.materia.color,
+    });
+    alCerrar();
   };
 
-  return { cambiarFin, abrirEditor, guardarHoras, eliminarActual };
+  return { abrirEdicionCompleta };
+}
+
+/** Acción de eliminar. */
+function useAccionEliminar(
+  bloque: BloqueConMateria | null,
+  alEliminar: (id: string) => Promise<void>,
+  alCerrar: () => void,
+) {
+  const eliminarActual = (): void => {
+    if (!bloque) return;
+    void alEliminar(bloque.bloque.id).then(alCerrar);
+  };
+
+  return { eliminarActual };
+}
+
+/** Cuerpo del menú (sin el wrapper Modal). */
+function CuerpoMenuBloque(props: {
+  bloque: BloqueConMateria;
+  estado: ReturnType<typeof useEstadoMenu>;
+  accionesHoras: ReturnType<typeof useAccionesHoras>;
+  accionEdicionCompleta: ReturnType<typeof useAccionEdicionCompleta>;
+  accionEliminar: ReturnType<typeof useAccionEliminar>;
+  alCerrar: () => void;
+}): ReactElement {
+  const {
+    bloque,
+    estado,
+    accionesHoras,
+    accionEdicionCompleta,
+    accionEliminar,
+    alCerrar,
+  } = props;
+  return (
+    <View style={styles.caja}>
+      <Text style={styles.titulo}>
+        {`${bloque.bloque.hora_inicio}–${bloque.bloque.hora_fin}`}
+      </Text>
+      {estado.errores.map((e) => (
+        <TextoError key={e} mensaje={e} />
+      ))}
+      {estado.editando ? (
+        <PanelEdicion
+          inicio={estado.inicio}
+          fin={estado.fin}
+          alCambiarInicio={estado.setInicio}
+          alCambiarFin={estado.setFin}
+          alGuardar={() => void accionesHoras.guardarHoras()}
+          alCancelar={() => estado.setEditando(false)}
+        />
+      ) : (
+        <AccionesRapidas
+          alAbrirEditor={accionesHoras.abrirEditor}
+          alAbrirEdicionCompleta={accionEdicionCompleta.abrirEdicionCompleta}
+          alCambiarFinDelta={(delta) => void accionesHoras.cambiarFin(delta)}
+          alEliminar={accionEliminar.eliminarActual}
+        />
+      )}
+      <BotonAccion texto="Cerrar" etiqueta="Cerrar menú" alPulsar={alCerrar} />
+    </View>
+  );
 }
 
 export function MenuBloque({
@@ -180,46 +273,37 @@ export function MenuBloque({
   alEliminar,
   alAjustarFin,
   alEditarHoras,
+  alEditarBloque,
   alCerrar,
 }: Props): ReactElement {
   const estado = useEstadoMenu();
-  const acciones = useAccionesMenu(
+  const accionesHoras = useAccionesHoras(
     bloque,
     estado,
     alAjustarFin,
     alEditarHoras,
-    alEliminar,
     alCerrar,
   );
+  const accionEdicionCompleta = useAccionEdicionCompleta(
+    bloque,
+    alEditarBloque,
+    alCerrar,
+  );
+  const accionEliminar = useAccionEliminar(bloque, alEliminar, alCerrar);
 
   if (!bloque) return <Modal visible={false} />;
 
   return (
     <Modal visible animationType="fade" transparent onRequestClose={alCerrar}>
       <View style={styles.velo}>
-        <View style={styles.caja}>
-          <Text style={styles.titulo}>{`${bloque.hora_inicio}–${bloque.hora_fin}`}</Text>
-          {estado.errores.map((e) => (
-            <TextoError key={e} mensaje={e} />
-          ))}
-          {estado.editando ? (
-            <PanelEdicion
-              inicio={estado.inicio}
-              fin={estado.fin}
-              alCambiarInicio={estado.setInicio}
-              alCambiarFin={estado.setFin}
-              alGuardar={() => void acciones.guardarHoras()}
-              alCancelar={() => estado.setEditando(false)}
-            />
-          ) : (
-            <AccionesRapidas
-              alAbrirEditor={acciones.abrirEditor}
-              alCambiarFinDelta={(delta) => void acciones.cambiarFin(delta)}
-              alEliminar={acciones.eliminarActual}
-            />
-          )}
-          <BotonAccion texto="Cerrar" etiqueta="Cerrar menú" alPulsar={alCerrar} />
-        </View>
+        <CuerpoMenuBloque
+          bloque={bloque}
+          estado={estado}
+          accionesHoras={accionesHoras}
+          accionEdicionCompleta={accionEdicionCompleta}
+          accionEliminar={accionEliminar}
+          alCerrar={alCerrar}
+        />
       </View>
     </Modal>
   );

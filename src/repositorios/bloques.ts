@@ -60,6 +60,15 @@ export function bloquePorId(id: string): FilaBloque | null {
   );
 }
 
+/** Bloque con su materia, para editarlo completo desde el menú. */
+export function bloqueConMateriaPorId(id: string): BloqueConMateria | null {
+  const fila = abrirBase().getFirstSync<Record<string, unknown>>(
+    `${CON_MATERIA} AND bloque.id = ?`,
+    id,
+  );
+  return fila ? filaAConMateria(fila) : null;
+}
+
 export function crearBloque(
   datos: Omit<Bloque, 'id' | 'notificacion_id'> & { notificacion_id?: string | null },
 ): string {
@@ -87,6 +96,19 @@ export function actualizarHoraFin(id: string, hora_fin: string): void {
     hora_fin,
     id,
   ]);
+}
+
+/** Cambia horas y materia de un bloque y marca pendiente. */
+export function actualizarBloque(
+  id: string,
+  materia_id: string,
+  hora_inicio: string,
+  hora_fin: string,
+): void {
+  abrirBase().runSync(
+    'UPDATE bloque SET materia_id = ?, hora_inicio = ?, hora_fin = ?, pending = 1 WHERE id = ?',
+    [materia_id, hora_inicio, hora_fin, id],
+  );
 }
 
 export function actualizarHoras(id: string, inicio: string, fin: string): void {

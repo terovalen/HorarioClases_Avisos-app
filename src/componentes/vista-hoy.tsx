@@ -6,6 +6,7 @@ import { EstadoCarga } from './estado-carga';
 import { TarjetaClase } from './tarjeta-clase';
 import { useDistanciaCampus, useReloj, type DatosHoy } from '../hooks/use-pantalla-hoy';
 import { leerAjustes } from '../repositorios/ajustes';
+import { minutosDelDia, parseHora } from '../logica/tiempo';
 
 type Props = DatosHoy & { sensorDisponible: boolean };
 
@@ -20,7 +21,13 @@ export function VistaHoy({
   const { distancia, verificar } = useDistanciaCampus();
   const ahora = useReloj();
   const ajustes = leerAjustes();
-  const hayClasePendiente = !!vista?.proxima || !!vista?.enCurso;
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+  /** Solo hay clase pendiente si hay una de HOY que aún no ha terminado. */
+  const hayClasePendiente =
+    vista?.deHoy.some((c) => {
+      const fin = parseHora(c.bloque.hora_fin);
+      return fin && minutosDelDia(fin) > minutosAhora;
+    }) ?? false;
 
   if (estado !== 'listo' || !vista) {
     return <EstadoCarga estado={estado} alReintentar={recargar} />;
