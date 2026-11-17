@@ -1,5 +1,9 @@
 /** Ajustes: campus, minutos de aviso, avisos, sincronización y sesión (RF-04/RF-06). */
-import { useRouter } from 'expo-router';
+import {
+  useNavigation,
+  type NavigationProp,
+  CommonActions,
+} from '@react-navigation/native';
 import { useState, type ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
@@ -11,22 +15,18 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
-import {
-  ajustesPendientes,
-  guardarAjustes,
-  leerAjustes,
-} from '../src/repositorios/ajustes';
-import { pedirPermisoAvisos, reprogramarAvisos } from '../src/servicios/notificaciones';
-import { listarBloques } from '../src/repositorios/bloques';
-import { listarMaterias } from '../src/repositorios/materias';
-import { sincronizarTodo } from '../src/servicios/sincronizacion';
-import { useSesion } from '../src/servicios/sesion';
-import { margenMetros } from '../src/logica/distancia';
-import type { Ajustes } from '../src/logica/tipos';
+import { ajustesPendientes, guardarAjustes, leerAjustes } from '../repositorios/ajustes';
+import { pedirPermisoAvisos, reprogramarAvisos } from '../servicios/notificaciones';
+import { listarBloques } from '../repositorios/bloques';
+import { listarMaterias } from '../repositorios/materias';
+import { sincronizarTodo } from '../servicios/sincronizacion';
+import { useSesion } from '../servicios/sesion';
+import { margenMetros } from '../logica/distancia';
+import type { Ajustes } from '../logica/tipos';
+import type { RootParamList } from '../nav/tipos';
 
 const PASO_AVISO = 5;
 
-/** Ubicación del campus: dos campos, botón de GPS y explicación del permiso. */
 function SeccionCampus({
   ajustes,
   alGuardar,
@@ -77,7 +77,6 @@ function SeccionCampus({
   );
 }
 
-/** Minutos de aviso con botones − / ＋ y la distancia de margen. */
 function SeccionMinutos({
   minutosAviso,
   alCambiar,
@@ -113,7 +112,6 @@ function SeccionMinutos({
   );
 }
 
-/** Acciones de la pantalla: GPS del campus, avisos y sincronización. */
 function useAccionesAjustes(
   ajustes: Ajustes,
   guardar: (a: Ajustes) => void,
@@ -164,7 +162,6 @@ function useAccionesAjustes(
   return { usarMiUbicacion, activarAvisos, sincronizar };
 }
 
-/** Botones de avisos y sincronización + mensajes + cerrar sesión. */
 function PieAjustes({
   mensaje,
   alActivarAvisos,
@@ -212,7 +209,7 @@ function PieAjustes({
 
 export default function PantallaAjustes(): ReactElement {
   const { salir } = useSesion();
-  const router = useRouter();
+  const navigation: NavigationProp<RootParamList> = useNavigation();
   const [ajustes, setAjustes] = useState(leerAjustes());
   const [mensaje, setMensaje] = useState<string | null>(null);
 
@@ -245,7 +242,13 @@ export default function PantallaAjustes(): ReactElement {
           mensaje={mensaje}
           alActivarAvisos={() => void activarAvisos()}
           alSincronizar={() => void sincronizar()}
-          alSalir={() => void salir().then(() => router.replace('/login'))}
+          alSalir={() =>
+            void salir().then(() =>
+              navigation.dispatch(
+                CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] }),
+              ),
+            )
+          }
         />
       </ScrollView>
     </KeyboardAvoidingView>

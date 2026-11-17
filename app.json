@@ -11,7 +11,8 @@
     "ios": {
       "bundleIdentifier": "com.equipo38.horarioclases",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Se usa tu ubicación únicamente para avisarte cuándo salir hacia el campus."
+        "NSLocationWhenInUseUsageDescription": "Se usa tu ubicación únicamente para avisarte cuándo salir hacia el campus.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -20,11 +21,12 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "POST_NOTIFICATIONS",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "plugins": [
-      ["expo-router", { "root": "app" }],
       [
         "expo-location",
         {
@@ -35,6 +37,10 @@
       "expo-secure-store",
       "expo-notifications"
     ],
-    "extra": {}
+    "extra": {
+      "eas": {
+        "projectId": "ac6bb95f-3327-4fdb-a432-4319db540a0f"
+      }
+    }
   }
 }

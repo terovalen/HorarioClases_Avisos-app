@@ -1,9 +1,9 @@
 /** Pantalla «Hoy»: próxima clase, cuenta regresiva, avisos y sincronización. */
 import type { ReactElement } from 'react';
-import { VistaHoy } from '../../src/componentes/vista-hoy';
-import { useDatosHoy } from '../../src/hooks/use-pantalla-hoy';
-import { useShake } from '../../src/sensores/use-shake';
-import { useSesion } from '../../src/servicios/sesion';
+import { VistaHoy } from '../componentes/vista-hoy';
+import { useDatosHoy } from '../hooks/use-pantalla-hoy';
+import { useShake } from '../sensores/use-shake';
+import { useSesion } from '../servicios/sesion';
 
 export default function PantallaHoy(): ReactElement {
   const { usuario } = useSesion();

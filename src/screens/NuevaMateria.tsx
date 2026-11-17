@@ -1,5 +1,5 @@
 /** Crear o editar una materia con docente, salón y color (RF-01). */
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useState, type ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
@@ -10,16 +10,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { validarMateria, PALETA_COLORES } from '../../src/logica/validaciones-materia';
-import {
-  actualizarMateria,
-  crearMateria,
-  materiaPorId,
-} from '../../src/repositorios/materias';
-import { bloquePorId, actualizarHoras } from '../../src/repositorios/bloques';
-import { validarBloque } from '../../src/logica/cruces';
-import { useSemana } from '../../src/hooks/use-semana';
-import type { Materia } from '../../src/logica/tipos';
+import { validarMateria, PALETA_COLORES } from '../logica/validaciones-materia';
+import { actualizarMateria, crearMateria, materiaPorId } from '../repositorios/materias';
+import { bloquePorId, actualizarHoras } from '../repositorios/bloques';
+import { validarBloque } from '../logica/cruces';
+import { useSemana } from '../hooks/use-semana';
+import type { Materia } from '../logica/tipos';
 
 type DatosMateria = {
   nombre: string;
@@ -30,7 +26,6 @@ type DatosMateria = {
 
 const COLOR_INICIAL = PALETA_COLORES[0] ?? '#2563eb';
 
-/** Valores iniciales del formulario según se edite una materia o se cree. */
 function estadoInicial(existente: Materia | null): {
   nombre: string;
   docente: string;
@@ -46,7 +41,6 @@ function estadoInicial(existente: Materia | null): {
   };
 }
 
-/** Valida y guarda; devuelve los mensajes de error (vacío si guardó). */
 function intentarGuardar(
   nombre: string,
   docente: string,
@@ -169,7 +163,6 @@ function TextoError({ mensaje }: { mensaje: string }): ReactElement {
   );
 }
 
-/** Campos del formulario de materia con sus valores iniciales. */
 function useCamposMateria(existente: Materia | null): {
   nombre: string;
   setNombre: (v: string) => void;
@@ -207,13 +200,12 @@ function useCamposMateria(existente: Materia | null): {
   };
 }
 
-/** Guardar y eliminar la materia: navegación, avisos y sincronización. */
 function useAccionesMateria(
   c: ReturnType<typeof useCamposMateria>,
   existente: Materia | null,
   bloqueId: string | undefined,
 ): { guardar: () => void; eliminar: () => Promise<void> } {
-  const router = useRouter();
+  const navigation = useNavigation();
   const { eliminarMateriaCompleta, recargar } = useSemana();
 
   const guardar = (): void => {
@@ -231,7 +223,7 @@ function useAccionesMateria(
     }
     c.setErrores([]);
     recargar();
-    router.back();
+    navigation.goBack();
   };
 
   const eliminar = async (): Promise<void> => {
@@ -239,14 +231,14 @@ function useAccionesMateria(
     c.setOcupado(true);
     await eliminarMateriaCompleta(existente.id);
     c.setOcupado(false);
-    router.back();
+    navigation.goBack();
   };
 
   return { guardar, eliminar };
 }
 
 export default function PantallaNuevaMateria(): ReactElement {
-  const params = useLocalSearchParams<{ id?: string; bloque?: string }>();
+  const params = (useRoute().params as { id?: string; bloque?: string }) ?? {};
   const existente = params.id ? materiaPorId(params.id) : null;
   const c = useCamposMateria(existente);
   const { guardar, eliminar } = useAccionesMateria(c, existente, params.bloque);

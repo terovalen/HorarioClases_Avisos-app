@@ -1,5 +1,9 @@
 /** Inicio de sesión / registro mediado por la API. */
-import { useRouter } from 'expo-router';
+import {
+  useNavigation,
+  type NavigationProp,
+  CommonActions,
+} from '@react-navigation/native';
 import { useState, type ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
@@ -8,12 +12,12 @@ import {
   Text,
   TextInput,
 } from 'react-native';
-import { ErrorApi } from '../src/api/cliente';
-import { useSesion } from '../src/servicios/sesion';
+import { ErrorApi } from '../api/cliente';
+import { useSesion } from '../servicios/sesion';
+import type { RootParamList } from '../nav/tipos';
 
 const CLAVE_MINIMA = 8;
 
-/** Devuelve el mensaje de validación o null si las credenciales son razonables. */
 function validarCredenciales(email: string, clave: string): string | null {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Escribe un correo válido.';
   if (clave.length < CLAVE_MINIMA) return 'La contraseña debe tener 8 caracteres o más.';
@@ -94,7 +98,7 @@ function PieLogin({
 
 export default function PantallaLogin(): ReactElement {
   const { iniciar, registrar } = useSesion();
-  const router = useRouter();
+  const navigation: NavigationProp<RootParamList> = useNavigation();
   const [email, setEmail] = useState('');
   const [clave, setClave] = useState('');
   const [modoRegistro, setModoRegistro] = useState(false);
@@ -112,7 +116,7 @@ export default function PantallaLogin(): ReactElement {
     try {
       if (modoRegistro) await registrar(email, clave);
       else await iniciar(email, clave);
-      router.replace('/(tabs)');
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Tabs' }] }));
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No hay conexión con la API.');
     } finally {

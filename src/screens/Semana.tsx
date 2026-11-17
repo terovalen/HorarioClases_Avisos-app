@@ -1,16 +1,16 @@
 /** Vista semanal: grilla por días con gestos y modales (RF-02). */
 import { useState, type ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CabeceraSemana } from '../../src/componentes/cabecera-semana';
-import { GrillaDia } from '../../src/componentes/grilla-dia';
-import { FormularioBloque } from '../../src/componentes/formulario-bloque';
-import { MenuBloque } from '../../src/componentes/menu-bloque';
-import { EstadoCarga } from '../../src/componentes/estado-carga';
-import { diaDeFecha, NOMBRES_DIAS } from '../../src/logica/tiempo';
-import { useSemana } from '../../src/hooks/use-semana';
-import { listarMaterias } from '../../src/repositorios/materias';
-import { bloquePorId } from '../../src/repositorios/bloques';
-import { pedirPermisoAvisos } from '../../src/servicios/notificaciones';
+import { CabeceraSemana } from '../componentes/cabecera-semana';
+import { GrillaDia } from '../componentes/grilla-dia';
+import { FormularioBloque } from '../componentes/formulario-bloque';
+import { MenuBloque } from '../componentes/menu-bloque';
+import { EstadoCarga } from '../componentes/estado-carga';
+import { diaDeFecha, NOMBRES_DIAS } from '../logica/tiempo';
+import { useSemana } from '../hooks/use-semana';
+import { listarMaterias } from '../repositorios/materias';
+import { bloquePorId } from '../repositorios/bloques';
+import { pedirPermisoAvisos } from '../servicios/notificaciones';
 
 function BotonCrearBloque({
   dia,
