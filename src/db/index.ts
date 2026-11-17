@@ -53,14 +53,19 @@ export function abrirBase(): SQLite.SQLiteDatabase {
 }
 
 /** Migración por versión (PRAGMA user_version): hoy v1, mañana se agregan
- *  pasos nuevos sin destruir los datos del usuario. */
+ *  pasos nuevos sin destruir los datos del usuario. El esquema usa
+ *  CREATE TABLE IF NOT EXISTS, así es seguro ejecutarlo siempre. */
 function migrar(db: SQLite.SQLiteDatabase): void {
   const fila = db.getFirstSync<{ user_version: number }>('PRAGMA user_version');
   const version = fila?.user_version ?? 0;
-  if (version >= 1) return;
   db.execSync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  if (version < 1) {
+    db.execSync(ESQUEMA_V1);
+    db.execSync('PRAGMA user_version = 1;');
+  }
+  // Asegurar que existan todas las tablas aunque la base de datos ya exista
+  // desde una versión previa (CREATE TABLE IF NOT EXISTS es idempotente).
   db.execSync(ESQUEMA_V1);
-  db.execSync('PRAGMA user_version = 1;');
 }
 
 /** Solo para pruebas. */
