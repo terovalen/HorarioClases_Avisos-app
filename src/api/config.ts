@@ -4,7 +4,5 @@ export function apiUrl(): string {
   // URL fija para evitar problemas con EXPO_PUBLIC_API_URL en iOS
   const url = 'https://horario-clases-avisos-api.vercel.app';
   const normalizada = url.replace(/\/$/, '');
-  // eslint-disable-next-line no-console
-  console.log(`[API] URL resuelta: ${normalizada}`);
   return normalizada;
 }
