@@ -7,6 +7,7 @@ import {
   bloquePorId,
   bloquesDeMateria,
   actualizarHoraFin,
+  actualizarHoras,
   crearBloque,
   eliminarBloque,
   listarBloques,
@@ -104,6 +105,31 @@ export function useCambiosSemana(recargar: () => void): {
   );
 
   return { crear, ajustarFin };
+}
+
+/** Edición manual de las horas de un bloque (menú de long-press): permite
+ *  escribir el inicio y el fin exactos (07:15, 08:45…). */
+export function useEdicionHoras(recargar: () => void): {
+  editarHoras: (id: string, hora_inicio: string, hora_fin: string) => Promise<Resultado>;
+} {
+  const editarHoras = useCallback(
+    async (id: string, hora_inicio: string, hora_fin: string): Promise<Resultado> => {
+      const actual = bloquePorId(id);
+      if (!actual) return { ok: false, errores: ['El bloque ya no existe.'] };
+      const fallo = validarContraExistente({
+        id,
+        dia: actual.dia,
+        hora_inicio,
+        hora_fin,
+      });
+      if (fallo) return fallo;
+      await aplicar(recargar, () => actualizarHoras(id, hora_inicio, hora_fin));
+      return OK;
+    },
+    [recargar],
+  );
+
+  return { editarHoras };
 }
 
 /** Eliminar bloques y materias; al eliminar una materia se cancelan sus avisos. */

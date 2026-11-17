@@ -5,12 +5,12 @@ import { CabeceraSemana } from '../componentes/cabecera-semana';
 import { GrillaDia } from '../componentes/grilla-dia';
 import { FormularioBloque } from '../componentes/formulario-bloque';
 import { MenuBloque } from '../componentes/menu-bloque';
+import { BotonAvisos } from '../componentes/boton-avisos';
 import { EstadoCarga } from '../componentes/estado-carga';
 import { diaDeFecha, NOMBRES_DIAS } from '../logica/tiempo';
-import { useSemana } from '../hooks/use-semana';
+import { useSemana, type DatosCrear, type Resultado } from '../hooks/use-semana';
 import { listarMaterias } from '../repositorios/materias';
-import { bloquePorId } from '../repositorios/bloques';
-import { pedirPermisoAvisos } from '../servicios/notificaciones';
+import { bloquePorId, type FilaBloque } from '../repositorios/bloques';
 
 function BotonCrearBloque({
   dia,
@@ -33,21 +33,56 @@ function BotonCrearBloque({
   );
 }
 
-function PieAvisos({ alActivar }: { alActivar: () => void }): ReactElement {
+type Hueco = { dia: number; hora: number; minuto: number } | null;
+
+/** Modales de la pantalla: creación de bloque y menú del bloque. */
+function ModalesSemana(props: {
+  hueco: Hueco;
+  dia: number;
+  bloqueMenu: FilaBloque | null;
+  alGuardar: (datos: DatosCrear) => Promise<Resultado>;
+  alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>;
+  alEditarHoras: (
+    id: string,
+    hora_inicio: string,
+    hora_fin: string,
+  ) => Promise<Resultado>;
+  alEliminar: (id: string) => Promise<void>;
+  alCerrarHueco: () => void;
+  alCerrarMenu: () => void;
+}): ReactElement {
   return (
-    <Pressable onPress={alActivar} accessibilityRole="button">
-      <Text style={styles.pie}>
-        Toca aquí si quieres activar o reprogramar los avisos
-      </Text>
-    </Pressable>
+    <>
+      <FormularioBloque
+        visible={props.hueco !== null}
+        dia={props.hueco?.dia ?? props.dia}
+        hora={props.hueco?.hora ?? 8}
+        minuto={props.hueco?.minuto ?? 0}
+        materias={listarMaterias()}
+        alGuardar={props.alGuardar}
+        alCerrar={props.alCerrarHueco}
+      />
+      <MenuBloque
+        bloque={props.bloqueMenu}
+        alEliminar={props.alEliminar}
+        alAjustarFin={props.alAjustarFin}
+        alEditarHoras={props.alEditarHoras}
+        alCerrar={props.alCerrarMenu}
+      />
+    </>
   );
 }
 
-type Hueco = { dia: number; hora: number; minuto: number } | null;
-
 export default function PantallaSemana(): ReactElement {
-  const { filas, estado, recargar, crear, ajustarFin, eliminarBloqueActual } =
-    useSemana();
+  const {
+    filas,
+    estado,
+    recargar,
+    crear,
+    ajustarFin,
+    editarHoras,
+    eliminarBloqueActual,
+  } = useSemana();
   const [dia, setDia] = useState(diaDeFecha(new Date()));
   const [hueco, setHueco] = useState<Hueco>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -77,21 +112,17 @@ export default function PantallaSemana(): ReactElement {
           alIrHoy={() => setDia(diaDeFecha(new Date()))}
         />
       </ScrollView>
-      <PieAvisos alActivar={() => void pedirPermisoAvisos()} />
-      <FormularioBloque
-        visible={hueco !== null}
-        dia={hueco?.dia ?? dia}
-        hora={hueco?.hora ?? 8}
-        minuto={hueco?.minuto ?? 0}
-        materias={listarMaterias()}
+      <BotonAvisos />
+      <ModalesSemana
+        hueco={hueco}
+        dia={dia}
+        bloqueMenu={bloqueMenu}
         alGuardar={crear}
-        alCerrar={() => setHueco(null)}
-      />
-      <MenuBloque
-        bloque={bloqueMenu}
-        alEliminar={eliminarBloqueActual}
         alAjustarFin={ajustarFin}
-        alCerrar={() => setMenuId(null)}
+        alEditarHoras={editarHoras}
+        alEliminar={eliminarBloqueActual}
+        alCerrarHueco={() => setHueco(null)}
+        alCerrarMenu={() => setMenuId(null)}
       />
     </View>
   );
@@ -107,5 +138,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   botonCrearTexto: { color: '#fff', fontWeight: '700', textAlign: 'center' },
-  pie: { color: '#586272', fontSize: 12, textAlign: 'center', paddingVertical: 6 },
 });

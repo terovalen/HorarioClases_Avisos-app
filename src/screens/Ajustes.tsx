@@ -12,11 +12,9 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { mensajeDeError } from '../api/cliente';
+import { BotonAvisos } from '../componentes/boton-avisos';
 import { PruebaConexion } from '../componentes/prueba-conexion';
 import { ajustesPendientes, guardarAjustes, leerAjustes } from '../repositorios/ajustes';
-import { pedirPermisoAvisos, reprogramarAvisos } from '../servicios/notificaciones';
-import { listarBloques } from '../repositorios/bloques';
-import { listarMaterias } from '../repositorios/materias';
 import { mensajeDeSincro, sincronizarTodo } from '../servicios/sincronizacion';
 import { useSesion } from '../servicios/sesion';
 import { margenMetros } from '../logica/distancia';
@@ -120,7 +118,6 @@ function useAccionesAjustes(
   alMensaje: (m: string) => void,
 ): {
   usarMiUbicacion: () => Promise<void>;
-  activarAvisos: () => Promise<void>;
   sincronizar: () => Promise<void>;
 } {
   const usarMiUbicacion = async (): Promise<void> => {
@@ -139,16 +136,6 @@ function useAccionesAjustes(
     });
   };
 
-  const activarAvisos = async (): Promise<void> => {
-    const ok = await pedirPermisoAvisos();
-    if (!ok) {
-      alMensaje('Permiso de notificaciones denegado: los avisos no sonarán.');
-      return;
-    }
-    const cantidad = await reprogramarAvisos(listarBloques(), listarMaterias(), ajustes);
-    alMensaje(`Avisos programados: ${cantidad}.`);
-  };
-
   const sincronizar = async (): Promise<void> => {
     try {
       const r = await sincronizarTodo();
@@ -160,30 +147,20 @@ function useAccionesAjustes(
     }
   };
 
-  return { usarMiUbicacion, activarAvisos, sincronizar };
+  return { usarMiUbicacion, sincronizar };
 }
 
 function PieAjustes({
   mensaje,
-  alActivarAvisos,
   alSincronizar,
   alSalir,
 }: {
   mensaje: string | null;
-  alActivarAvisos: () => void;
   alSincronizar: () => void;
   alSalir: () => void;
 }): ReactElement {
   return (
     <>
-      <Pressable
-        style={styles.boton}
-        onPress={alActivarAvisos}
-        accessibilityRole="button"
-        accessibilityLabel="Activar avisos semanales"
-      >
-        <Text style={styles.botonTexto}>🔔 Activar avisos semanales</Text>
-      </Pressable>
       <Pressable
         style={styles.boton}
         onPress={alSincronizar}
@@ -222,7 +199,7 @@ export default function PantallaAjustes(): ReactElement {
     );
   };
 
-  const { usarMiUbicacion, activarAvisos, sincronizar } = useAccionesAjustes(
+  const { usarMiUbicacion, sincronizar } = useAccionesAjustes(
     ajustes,
     guardar,
     setMensaje,
@@ -232,6 +209,8 @@ export default function PantallaAjustes(): ReactElement {
     <KeyboardAvoidingView style={styles.base} behavior="padding">
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <Text style={styles.titulo}>Ajustes</Text>
+        <BotonAvisos />
+        <PruebaConexion />
         <SeccionCampus
           ajustes={ajustes}
           alGuardar={guardar}
@@ -241,10 +220,8 @@ export default function PantallaAjustes(): ReactElement {
           minutosAviso={ajustes.minutos_aviso}
           alCambiar={(n) => guardar({ ...ajustes, minutos_aviso: n })}
         />
-        <PruebaConexion />
         <PieAjustes
           mensaje={mensaje}
-          alActivarAvisos={() => void activarAvisos()}
           alSincronizar={() => void sincronizar()}
           alSalir={() => void salir().then(() => navigation.navigate('Login'))}
         />

@@ -1,15 +1,22 @@
-/** Menú de un bloque (alternativa por botón a los gestos): eliminar o
- *  ajustar la hora de fin en pasos de 15 minutos. */
+/** Menú de un bloque (alternativa por botón a los gestos): editar la hora de
+ *  inicio y fin de forma manual, ajustar el fin en pasos de 30 minutos o
+ *  eliminar el bloque. */
 import { useState, type ReactElement } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatearHora, minutosAHora, minutosDelDia, parseHora } from '../logica/tiempo';
 import type { Bloque } from '../logica/tipos';
 import type { Resultado } from '../hooks/use-semana';
+import { EditorHoras } from './editor-horas';
 
 type Props = {
   bloque: Bloque | null;
   alEliminar: (id: string) => Promise<void>;
   alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>;
+  alEditarHoras: (
+    id: string,
+    hora_inicio: string,
+    hora_fin: string,
+  ) => Promise<Resultado>;
   alCerrar: () => void;
 };
 
@@ -45,54 +52,172 @@ function BotonAccion({
   );
 }
 
-export function MenuBloque({
-  bloque,
-  alEliminar,
-  alAjustarFin,
-  alCerrar,
-}: Props): ReactElement {
+/** Panel de edición manual de las horas (07:15, 08:45…). */
+function PanelEdicion(props: {
+  inicio: string;
+  fin: string;
+  alCambiarInicio: (v: string) => void;
+  alCambiarFin: (v: string) => void;
+  alGuardar: () => void;
+  alCancelar: () => void;
+}): ReactElement {
+  return (
+    <>
+      <EditorHoras
+        inicio={props.inicio}
+        fin={props.fin}
+        alCambiarInicio={props.alCambiarInicio}
+        alCambiarFin={props.alCambiarFin}
+      />
+      <BotonAccion
+        texto="Guardar horas"
+        etiqueta="Guardar las horas escritas"
+        alPulsar={props.alGuardar}
+      />
+      <BotonAccion
+        texto="Cancelar edición"
+        etiqueta="Cancelar la edición de horas"
+        alPulsar={props.alCancelar}
+      />
+    </>
+  );
+}
+
+/** Acciones rápidas del menú. */
+function AccionesRapidas(props: {
+  alAbrirEditor: () => void;
+  alCambiarFinDelta: (delta: number) => void;
+  alEliminar: () => void;
+}): ReactElement {
+  return (
+    <>
+      <BotonAccion
+        texto="✏️ Editar hora (exacta)"
+        etiqueta="Editar la hora de inicio y de fin"
+        alPulsar={props.alAbrirEditor}
+      />
+      <BotonAccion
+        texto="Fin +30 min"
+        etiqueta="Extender fin 30 minutos"
+        alPulsar={() => props.alCambiarFinDelta(30)}
+      />
+      <BotonAccion
+        texto="Fin −30 min"
+        etiqueta="Acortar fin 30 minutos"
+        alPulsar={() => props.alCambiarFinDelta(-30)}
+      />
+      <BotonAccion
+        texto="Eliminar bloque"
+        etiqueta="Eliminar bloque"
+        peligro
+        alPulsar={props.alEliminar}
+      />
+    </>
+  );
+}
+
+/** Estado del menú (errores, modo edición y horas escritas). */
+function useEstadoMenu() {
   const [errores, setErrores] = useState<string[]>([]);
+  const [editando, setEditando] = useState(false);
+  const [inicio, setInicio] = useState('');
+  const [fin, setFin] = useState('');
+  return { errores, setErrores, editando, setEditando, inicio, setInicio, fin, setFin };
+}
 
-  if (!bloque) return <Modal visible={false} />;
-
-  const finActual = minutosDelDia(parseHora(bloque.hora_fin) ?? { h: 0, m: 0 });
+/** Acciones del menú sobre el bloque seleccionado. */
+function useAccionesMenu(
+  bloque: Bloque | null,
+  estado: ReturnType<typeof useEstadoMenu>,
+  alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>,
+  alEditarHoras: (
+    id: string,
+    hora_inicio: string,
+    hora_fin: string,
+  ) => Promise<Resultado>,
+  alEliminar: (id: string) => Promise<void>,
+  alCerrar: () => void,
+) {
+  const { setErrores, setInicio, setFin, setEditando } = estado;
 
   const cambiarFin = async (delta: number): Promise<void> => {
-    const nueva = formatearHora(minutosAHora(finActual + delta));
-    const r = await alAjustarFin(bloque.id, nueva);
+    if (!bloque) return;
+    const actual = minutosDelDia(parseHora(bloque.hora_fin) ?? { h: 0, m: 0 });
+    const r = await alAjustarFin(bloque.id, formatearHora(minutosAHora(actual + delta)));
     if (!r.ok) setErrores(r.errores);
     else alCerrar();
   };
 
+  const abrirEditor = (): void => {
+    if (!bloque) return;
+    setErrores([]);
+    setInicio(bloque.hora_inicio);
+    setFin(bloque.hora_fin);
+    setEditando(true);
+  };
+
+  const guardarHoras = async (): Promise<void> => {
+    if (!bloque) return;
+    const r = await alEditarHoras(bloque.id, estado.inicio.trim(), estado.fin.trim());
+    if (!r.ok) {
+      setErrores(r.errores);
+      return;
+    }
+    alCerrar();
+  };
+
   const eliminarActual = (): void => {
+    if (!bloque) return;
     setErrores([]);
     void alEliminar(bloque.id).then(alCerrar);
   };
+
+  return { cambiarFin, abrirEditor, guardarHoras, eliminarActual };
+}
+
+export function MenuBloque({
+  bloque,
+  alEliminar,
+  alAjustarFin,
+  alEditarHoras,
+  alCerrar,
+}: Props): ReactElement {
+  const estado = useEstadoMenu();
+  const acciones = useAccionesMenu(
+    bloque,
+    estado,
+    alAjustarFin,
+    alEditarHoras,
+    alEliminar,
+    alCerrar,
+  );
+
+  if (!bloque) return <Modal visible={false} />;
 
   return (
     <Modal visible animationType="fade" transparent onRequestClose={alCerrar}>
       <View style={styles.velo}>
         <View style={styles.caja}>
           <Text style={styles.titulo}>{`${bloque.hora_inicio}–${bloque.hora_fin}`}</Text>
-          {errores.map((e) => (
+          {estado.errores.map((e) => (
             <TextoError key={e} mensaje={e} />
           ))}
-          <BotonAccion
-            texto="Fin +30 min"
-            etiqueta="Extender fin 30 minutos"
-            alPulsar={() => void cambiarFin(30)}
-          />
-          <BotonAccion
-            texto="Fin −30 min"
-            etiqueta="Acortar fin 30 minutos"
-            alPulsar={() => void cambiarFin(-30)}
-          />
-          <BotonAccion
-            texto="Eliminar bloque"
-            etiqueta="Eliminar bloque"
-            peligro
-            alPulsar={eliminarActual}
-          />
+          {estado.editando ? (
+            <PanelEdicion
+              inicio={estado.inicio}
+              fin={estado.fin}
+              alCambiarInicio={estado.setInicio}
+              alCambiarFin={estado.setFin}
+              alGuardar={() => void acciones.guardarHoras()}
+              alCancelar={() => estado.setEditando(false)}
+            />
+          ) : (
+            <AccionesRapidas
+              alAbrirEditor={acciones.abrirEditor}
+              alCambiarFinDelta={(delta) => void acciones.cambiarFin(delta)}
+              alEliminar={acciones.eliminarActual}
+            />
+          )}
           <BotonAccion texto="Cerrar" etiqueta="Cerrar menú" alPulsar={alCerrar} />
         </View>
       </View>

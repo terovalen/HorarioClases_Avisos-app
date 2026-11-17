@@ -8,23 +8,21 @@ import {
   listarMaterias,
   materiasPendientes,
   purgarMateria,
-  sustituirMateria,
 } from '../repositorios/materias';
-import {
-  listarBloques,
-  bloquesPendientes,
-  purgarBloque,
-  sustituirBloque,
-} from '../repositorios/bloques';
+import { listarBloques, bloquesPendientes, purgarBloque } from '../repositorios/bloques';
 import {
   ajustesPendientes,
   guardarCursor,
   leerCursor,
   leerAjustes,
-  sustituirAjustes,
 } from '../repositorios/ajustes';
 import { cancelarAvisoDeBloque, reprogramarAvisos } from './notificaciones';
-import type { Ajustes, Bloque, Materia } from '../logica/tipos';
+import {
+  guardarAjustesRemota,
+  guardarBloqueRemota,
+  guardarMateriaRemota,
+  type AjustesRemotos,
+} from './sincro-guardado';
 
 export type ResultadoSincro = {
   enviados: number;
@@ -60,17 +58,24 @@ export async function sincronizarTodo(): Promise<ResultadoSincro> {
   resultado.recibidos += await recibirConControl(
     '/api/bloque',
     'bloque',
-    guardarBloqueRemoto,
+    guardarBloqueRemota,
     resultado,
   );
-  resultado.recibidos += await recibirConControl(
-    '/api/ajustes/horario',
-    'ajustes',
-    guardarAjustesRemota,
-    resultado,
-  );
+  await recibirAjustesRemotos(resultado);
   await programarAvisos(resultado);
   return resultado;
+}
+
+/** /api/ajustes/horario devuelve el documento único, no un listado de cambios. */
+async function recibirAjustesRemotos(r: ResultadoSincro): Promise<void> {
+  try {
+    const doc = await peticion<AjustesRemotos>('/api/ajustes/horario', {
+      conToken: true,
+    });
+    guardarAjustesRemota(doc);
+  } catch (error) {
+    registrarError(r, error);
+  }
 }
 
 /** Explica el resultado sin mentir: «sin conexión» solo si la red falló. */
@@ -180,9 +185,9 @@ function guardarDocumentoRemoto(
   doc: DocumentoRemoto,
 ): void {
   if (recurso === 'materia') {
-    sustituirMateria(aMateria(doc));
+    guardarMateriaRemota(doc);
   } else {
-    sustituirBloque(aBloque(doc));
+    guardarBloqueRemota(doc);
   }
 }
 
@@ -235,7 +240,7 @@ async function enviarAjustes(r: ResultadoSincro): Promise<number> {
   if (!ajustesPendientes()) return 0;
   try {
     const ajustes = leerAjustes();
-    const doc = await peticion<DocumentoRemoto>('/api/ajustes/horario', {
+    const doc = await peticion<AjustesRemotos>('/api/ajustes/horario', {
       metodo: 'PUT',
       conToken: true,
       cuerpo: {
@@ -244,53 +249,10 @@ async function enviarAjustes(r: ResultadoSincro): Promise<number> {
         minutos_aviso: ajustes.minutos_aviso,
       },
     });
-    sustituirAjustes(ajustes, doc.updated_at ?? null);
+    guardarAjustesRemota(doc);
     return 1;
   } catch (error) {
     registrarError(r, error);
     return 0;
   }
-}
-
-function guardarAjustesRemota(doc: DocumentoRemoto): void {
-  const ajustes: Ajustes = {
-    campus_lat: (doc['campus_lat'] as number | null) ?? null,
-    campus_lng: (doc['campus_lng'] as number | null) ?? null,
-    minutos_aviso: Number(doc['minutos_aviso'] ?? 15),
-  };
-  if (ajustes.minutos_aviso >= 0 && ajustes.minutos_aviso <= 120) {
-    sustituirAjustes(ajustes, doc.updated_at ?? null);
-  }
-}
-
-function guardarMateriaRemota(doc: DocumentoRemoto): void {
-  sustituirMateria(aMateria(doc));
-}
-
-function guardarBloqueRemoto(doc: DocumentoRemoto): void {
-  sustituirBloque(aBloque(doc));
-}
-
-function aMateria(doc: DocumentoRemoto): Materia & { updated_at: string | null } {
-  return {
-    id: doc.id,
-    nombre: String(doc['nombre'] ?? ''),
-    docente: (doc['docente'] as string | null) ?? null,
-    salon: (doc['salon'] as string | null) ?? null,
-    color: String(doc['color'] ?? '#2563eb'),
-    updated_at: doc.updated_at,
-  };
-}
-
-function aBloque(doc: DocumentoRemoto): Omit<Bloque, 'notificacion_id'> & {
-  updated_at: string | null;
-} {
-  return {
-    id: doc.id,
-    materia_id: String(doc['materia_id'] ?? ''),
-    dia: Number(doc['dia'] ?? 1),
-    hora_inicio: String(doc['hora_inicio'] ?? '07:00'),
-    hora_fin: String(doc['hora_fin'] ?? '08:00'),
-    updated_at: doc.updated_at,
-  };
 }

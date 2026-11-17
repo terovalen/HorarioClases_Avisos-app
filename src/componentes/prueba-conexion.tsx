@@ -14,11 +14,11 @@ export function PruebaConexion(): ReactElement {
     setProbando(true);
     const inicio = Date.now();
     try {
-      const datos = await peticion<{ ok: boolean }>('/api/health');
+      const datos = await peticion<{ ok: boolean; firebase?: string }>('/api/health');
       const ms = Date.now() - inicio;
       setResultado({
         ok: datos.ok === true,
-        mensaje: `API accesible en ${ms} ms · ${apiUrl()}`,
+        mensaje: `API accesible en ${ms} ms · Firebase: ${datos.firebase ?? '?'} · ${apiUrl()}`,
       });
     } catch (error) {
       setResultado({
