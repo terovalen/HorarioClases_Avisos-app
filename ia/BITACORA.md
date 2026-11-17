@@ -77,6 +77,27 @@ si no se entiende, no se entrega.
   `hayClasePendiente` y solo muestra «sal ya» cuando hay una clase hoy que aún
   no ha terminado (próxima o en curso).
 
+## Entrada 5 · 2026-11-17 · Sal ya solo con clase hoy, salon/docente en tarjeta, edicion completa desde menu
+
+- **Propósito:** corregir problemas reportados desde el iPhone:
+  (1) el banner «sal ya» seguía apareciendo aunque la clase ya hubiera pasado;
+  (2) la tarjeta del bloque en la grilla no mostraba docente ni salón;
+  (3) desde el menú de long-press solo se podían editar las horas, no todo el
+  bloque.
+- **Evidencia:** banner «sal ya» a las 15:00 para una clase de las 7:30 ya
+  terminada; tarjeta solo mostraba nombre y horas; menú solo tenía «Editar
+  hora (exacta)».
+- **Validación:** `npm run check` en verde (82 pruebas, typecheck + lint +
+  formato + pruebas).
+- **Decisión:** (1) `BannerSalYa` solo muestra «sal ya» cuando hay una clase
+  de HOY que aún no ha terminado (se calcula desde `deHoy` comparando
+  `hora_fin` con la hora actual); (2) `TarjetaBloque` en la grilla ahora
+  muestra docente y salón además del nombre y las horas; (3) el menú de
+  long-press tiene un nuevo botón «✏️ Editar bloque completo» que abre un
+  formulario para cambiar materia, horas exactas, docente, salón y color de
+  una vez; (4) `FormularioEdicionBloque` es un nuevo componente que precarga
+  todos los valores del bloque existente.
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
