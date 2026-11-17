@@ -81,6 +81,7 @@ function CampoTexto({
     <TextInput
       style={styles.campo}
       placeholder={pista}
+      placeholderTextColor="#9ca3af"
       value={valor}
       onChangeText={alCambiar}
       accessibilityLabel={etiqueta}

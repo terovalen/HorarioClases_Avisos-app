@@ -27,15 +27,17 @@ import type { RootParamList } from '../nav/tipos';
 
 const PASO_AVISO = 5;
 
+interface SeccionCampusProps {
+  ajustes: Ajustes;
+  alGuardar: (a: Ajustes) => void;
+  alUsarMiUbicacion: () => void;
+}
+
 function SeccionCampus({
   ajustes,
   alGuardar,
   alUsarMiUbicacion,
-}: {
-  ajustes: Ajustes;
-  alGuardar: (a: Ajustes) => void;
-  alUsarMiUbicacion: () => void;
-}): ReactElement {
+}: SeccionCampusProps): ReactElement {
   return (
     <>
       <Text style={styles.rotulo}>Ubicación del campus</Text>
@@ -48,6 +50,7 @@ function SeccionCampus({
             alGuardar({ ...ajustes, campus_lat: Number(v.replace(',', '.')) || null })
           }
           placeholder="Latitud"
+          placeholderTextColor="#9ca3af"
           accessibilityLabel="Latitud del campus"
         />
         <TextInput
@@ -58,6 +61,7 @@ function SeccionCampus({
             alGuardar({ ...ajustes, campus_lng: Number(v.replace(',', '.')) || null })
           }
           placeholder="Longitud"
+          placeholderTextColor="#9ca3af"
           accessibilityLabel="Longitud del campus"
         />
       </View>
@@ -70,8 +74,8 @@ function SeccionCampus({
         <Text style={styles.botonTexto}>📍 Usar mi ubicación actual</Text>
       </Pressable>
       <Text style={styles.nota}>
-        El permiso de ubicación se pide solo aquí, con esta explicación: sirve para
-        calcular tu distancia al campus.
+        El permiso de ubicación se pide solo aquí: sirve para calcular tu distancia al
+        campus.
       </Text>
     </>
   );

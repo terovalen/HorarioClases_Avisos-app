@@ -42,6 +42,7 @@ function CamposLogin(props: CamposProps): ReactElement {
         keyboardType="email-address"
         value={props.email}
         onChangeText={props.setEmail}
+        placeholderTextColor="#9ca3af"
         accessibilityLabel="Correo electrónico"
       />
       <TextInput
@@ -50,6 +51,7 @@ function CamposLogin(props: CamposProps): ReactElement {
         secureTextEntry
         value={props.clave}
         onChangeText={props.setClave}
+        placeholderTextColor="#9ca3af"
         accessibilityLabel="Contraseña"
       />
       {props.error ? (
