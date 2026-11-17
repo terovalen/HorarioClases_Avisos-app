@@ -28,3 +28,7 @@ expo/
 *.p12
 *.mobileprovision
 web-build/
+
+# Carpetas nativas generadas por expo prebuild / EAS Build (no se commitean)
+android/
+ios/
