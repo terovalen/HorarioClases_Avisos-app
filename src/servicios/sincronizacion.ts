@@ -1,7 +1,7 @@
 /** Sincronización idempotente (sección 9.3): enviar pendientes y traer cambios.
  *  La app escribe primero en SQLite (pending = 1); la sincronización corre al
  *  abrir la app, tras cada cambio y manualmente desde Ajustes. */
-import { peticion } from '../api/cliente';
+import { esFalloDeRed, mensajeDeError, peticion } from '../api/cliente';
 import { siguienteCursor, tipoDeEscritura } from '../logica/sincronizacion-logica';
 import type { DocumentoRemoto } from '../logica/sincronizacion-logica';
 import {
@@ -26,10 +26,24 @@ import {
 import { cancelarAvisoDeBloque, reprogramarAvisos } from './notificaciones';
 import type { Ajustes, Bloque, Materia } from '../logica/tipos';
 
-export type ResultadoSincro = { enviados: number; recibidos: number; errores: number };
+export type ResultadoSincro = {
+  enviados: number;
+  recibidos: number;
+  errores: number;
+  /** Primer fallo encontrado, para explicarlo sin adivinar. */
+  detalle: string | null;
+  /** true cuando el fallo fue de red (no se pudo contactar con la API). */
+  sinConexion: boolean;
+};
 
 export async function sincronizarTodo(): Promise<ResultadoSincro> {
-  const resultado: ResultadoSincro = { enviados: 0, recibidos: 0, errores: 0 };
+  const resultado: ResultadoSincro = {
+    enviados: 0,
+    recibidos: 0,
+    errores: 0,
+    detalle: null,
+    sinConexion: false,
+  };
   resultado.enviados += await enviarPendientes(
     'materia',
     materiasPendientes(),
@@ -37,23 +51,64 @@ export async function sincronizarTodo(): Promise<ResultadoSincro> {
   );
   resultado.enviados += await enviarPendientes('bloque', bloquesPendientes(), resultado);
   resultado.enviados += await enviarAjustes(resultado);
-  resultado.recibidos += await recibirCambios(
+  resultado.recibidos += await recibirConControl(
     '/api/materia',
     'materia',
     guardarMateriaRemota,
+    resultado,
   );
-  resultado.recibidos += await recibirCambios(
+  resultado.recibidos += await recibirConControl(
     '/api/bloque',
     'bloque',
     guardarBloqueRemoto,
+    resultado,
   );
-  resultado.recibidos += await recibirCambios(
+  resultado.recibidos += await recibirConControl(
     '/api/ajustes/horario',
     'ajustes',
     guardarAjustesRemota,
+    resultado,
   );
-  await reprogramarAvisos(listarBloques(), listarMaterias(), leerAjustes());
+  await programarAvisos(resultado);
   return resultado;
+}
+
+/** Explica el resultado sin mentir: «sin conexión» solo si la red falló. */
+export function mensajeDeSincro(r: ResultadoSincro): string {
+  if (r.errores === 0) return 'Sincronizado con la API';
+  if (r.sinConexion) return 'Sin conexión · los cambios quedan guardados en el teléfono';
+  return `Sincronizado con errores · ${r.detalle ?? 'revisa los detalles'}`;
+}
+
+/** Un fallo en una ruta no cancela el resto de la sincronización. */
+async function recibirConControl(
+  ruta: string,
+  recurso: string,
+  guardar: (doc: DocumentoRemoto) => void,
+  r: ResultadoSincro,
+): Promise<number> {
+  try {
+    return await recibirCambios(ruta, recurso, guardar);
+  } catch (error) {
+    registrarError(r, error);
+    return 0;
+  }
+}
+
+/** Los avisos son una función opcional: si fallan no rompen la sincronización. */
+async function programarAvisos(r: ResultadoSincro): Promise<void> {
+  try {
+    await reprogramarAvisos(listarBloques(), listarMaterias(), leerAjustes());
+  } catch (error) {
+    registrarError(r, error);
+  }
+}
+
+/** Guarda el primer fallo y marca si fue un problema de red. */
+function registrarError(r: ResultadoSincro, error: unknown): void {
+  r.errores++;
+  if (r.detalle === null) r.detalle = mensajeDeError(error);
+  if (esFalloDeRed(error)) r.sinConexion = true;
 }
 
 type Listado = { items: DocumentoRemoto[]; servidor_ahora: string };
@@ -96,8 +151,8 @@ async function enviarPendientes(
         guardarDocumentoRemoto(recurso, doc);
       }
       enviados++;
-    } catch {
-      r.errores++;
+    } catch (error) {
+      registrarError(r, error);
     }
   }
   return enviados;
@@ -191,8 +246,8 @@ async function enviarAjustes(r: ResultadoSincro): Promise<number> {
     });
     sustituirAjustes(ajustes, doc.updated_at ?? null);
     return 1;
-  } catch {
-    r.errores++;
+  } catch (error) {
+    registrarError(r, error);
     return 0;
   }
 }

@@ -11,11 +11,13 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { mensajeDeError } from '../api/cliente';
+import { PruebaConexion } from '../componentes/prueba-conexion';
 import { ajustesPendientes, guardarAjustes, leerAjustes } from '../repositorios/ajustes';
 import { pedirPermisoAvisos, reprogramarAvisos } from '../servicios/notificaciones';
 import { listarBloques } from '../repositorios/bloques';
 import { listarMaterias } from '../repositorios/materias';
-import { sincronizarTodo } from '../servicios/sincronizacion';
+import { mensajeDeSincro, sincronizarTodo } from '../servicios/sincronizacion';
 import { useSesion } from '../servicios/sesion';
 import { margenMetros } from '../logica/distancia';
 import type { Ajustes } from '../logica/tipos';
@@ -151,11 +153,10 @@ function useAccionesAjustes(
     try {
       const r = await sincronizarTodo();
       alMensaje(
-        `Sincronizado · enviados ${r.enviados} · recibidos ${r.recibidos}` +
-          (r.errores > 0 ? ` · ${r.errores} errores` : ''),
+        `${mensajeDeSincro(r)} · enviados ${r.enviados} · recibidos ${r.recibidos}`,
       );
-    } catch {
-      alMensaje('Sin conexión: tus cambios siguen pendientes en el teléfono.');
+    } catch (error) {
+      alMensaje(mensajeDeError(error));
     }
   };
 
@@ -216,7 +217,9 @@ export default function PantallaAjustes(): ReactElement {
   const guardar = (nuevos: Ajustes): void => {
     setAjustes(nuevos);
     guardarAjustes(nuevos);
-    setMensaje('Guardado localmente; se sincroniza cuando haya conexión.');
+    setMensaje(
+      'Guardado en el teléfono. Pulsa «Sincronizar ahora» para enviarlo a la API.',
+    );
   };
 
   const { usarMiUbicacion, activarAvisos, sincronizar } = useAccionesAjustes(
@@ -238,6 +241,7 @@ export default function PantallaAjustes(): ReactElement {
           minutosAviso={ajustes.minutos_aviso}
           alCambiar={(n) => guardar({ ...ajustes, minutos_aviso: n })}
         />
+        <PruebaConexion />
         <PieAjustes
           mensaje={mensaje}
           alActivarAvisos={() => void activarAvisos()}

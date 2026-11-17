@@ -42,8 +42,6 @@ async function lanzar(ruta: string, opciones: Opciones): Promise<Response> {
     cabeceras['Authorization'] = `Bearer ${sesion.token}`;
   }
   const urlCompleta = `${apiUrl()}${ruta}`;
-  // eslint-disable-next-line no-console
-  console.log(`[API] ${opciones.metodo ?? 'GET'} ${urlCompleta}`);
   try {
     return await fetch(urlCompleta, {
       method: opciones.metodo ?? 'GET',
@@ -51,13 +49,27 @@ async function lanzar(ruta: string, opciones: Opciones): Promise<Response> {
       body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`[API] Error de red en ${urlCompleta}:`, error);
     throw new ErrorApi(
       0,
       `No se pudo conectar con la API (${urlCompleta}). Verifica tu conexión a internet.`,
+      error instanceof Error ? [{ campo: 'red', mensaje: error.message }] : [],
     );
   }
+}
+
+/** Un error de red (estado 0) NO es lo mismo que un error del servidor. */
+export function esFalloDeRed(error: unknown): boolean {
+  return error instanceof ErrorApi && error.estado === 0;
+}
+
+/** Mensaje para la persona usuaria: distingue red caída de error de la API. */
+export function mensajeDeError(error: unknown): string {
+  if (error instanceof ErrorApi) {
+    if (error.estado === 0) return 'Sin conexión con la API.';
+    return `Error ${error.estado}: ${error.message}`;
+  }
+  if (error instanceof Error) return error.message;
+  return 'Error desconocido.';
 }
 
 /** Una sola renovación: si falla se cierra la sesión y hay que volver a entrar. */

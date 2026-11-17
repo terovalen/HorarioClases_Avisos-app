@@ -15,6 +15,21 @@ si no se entiende, no se entrega.
 - **Decisión:** aceptar la configuración y el esqueleto tras revisión manual
   del diff completo por ambos integrantes.
 
+## Entrada 2 · 2026-11-17 · Aviso de «sin conexión» y migración SQLite en iOS
+
+- **Propósito:** corregir dos fallos observados en el iPhone con Expo Go:
+  `no such table: bloque` y un aviso «Sin conexión» que aparecía teniendo red.
+- **Evidencia:** logs del Metro en el dispositivo (`[API] POST .../api/auth/login`
+  correcto y luego `Error code 1: no such table: bloque`) y captura de la pantalla
+  «Hoy» con el aviso de conexión.
+- **Validación:** `npm run check` en verde (82 pruebas, cobertura por encima del
+  umbral). La migración ejecuta ahora una sola sentencia por `execSync` y el
+  `CHECK` de `bloque` quedó al final del esquema.
+- **Decisión:** el aviso de conexión solo puede decir «Sin conexión» cuando el
+  fallo es de red (`ErrorApi` con estado 0). Un 401/404/500 de la API o un fallo
+  al programar avisos muestran su causa real y no abortan el resto de la
+  sincronización.
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
@@ -32,6 +47,12 @@ si no se entiende, no se entrega.
    incluía dónde inicia sesión el usuario. Se agregó `app/login.tsx` con
    validación y estados de carga/error, sin alterar los requisitos del
    documento.
+5. **Aviso de «sin conexión».** La IA propuso mostrar ese aviso ante cualquier
+   fallo de la sincronización. Se corrigió: el mensaje solo corresponde a un
+   fallo de red; los errores de la API y los fallos al programar avisos se
+   muestran con su código y su mensaje real. Se añadió además el botón
+   «Comprobar conexión» (GET `/api/health`) para distinguir red caída de API
+   con fallo.
 
 > Los integrantes deben agregar aquí sus propios casos con fecha y evidencia
 > (captura o enlace al diff) a medida que trabajan.

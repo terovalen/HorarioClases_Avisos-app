@@ -8,7 +8,8 @@ import type { VistaHoy } from '../logica/proxima-clase';
 import type { EstadoPantalla } from '../logica/tipos';
 import { leerAjustes } from '../repositorios/ajustes';
 import { listarBloquesConMateria } from '../repositorios/bloques';
-import { sincronizarTodo } from '../servicios/sincronizacion';
+import { mensajeDeSincro, sincronizarTodo } from '../servicios/sincronizacion';
+import { mensajeDeError } from '../api/cliente';
 
 export type DatosHoy = {
   estado: EstadoPantalla;
@@ -36,11 +37,9 @@ export function useDatosHoy(usuarioActivo: boolean): DatosHoy {
     if (!usuarioActivo) return;
     try {
       const r = await sincronizarTodo();
-      setAvisoSincro(
-        r.errores > 0 ? 'Sincronizado con errores' : 'Sincronizado con la API',
-      );
-    } catch {
-      setAvisoSincro('Sin conexión · los cambios quedan guardados en el teléfono');
+      setAvisoSincro(mensajeDeSincro(r));
+    } catch (error) {
+      setAvisoSincro(mensajeDeError(error));
     }
     recargar();
   }, [usuarioActivo, recargar]);

@@ -1,5 +1,5 @@
 /** Cliente HTTP: refresco único en 401 y formato de error de la API. */
-import { ErrorApi, peticion } from '../src/api/cliente';
+import { ErrorApi, esFalloDeRed, mensajeDeError, peticion } from '../src/api/cliente';
 import { borrarSesion, guardarSesion, leerSesion } from '../src/api/tokens';
 
 jest.mock('../src/api/tokens', () => ({
@@ -92,5 +92,31 @@ describe('peticion', () => {
       peticion('/api/auth/login', { metodo: 'POST', cuerpo: {} }),
     ).rejects.toThrow('Correo o contraseña incorrectos');
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('fallo de red', () => {
+  test('un fetch rechazado es fallo de red, no error de la API', async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(
+      new TypeError('Network request failed'),
+    );
+    const error = await peticion('/api/health').catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ErrorApi);
+    expect((error as ErrorApi).estado).toBe(0);
+    expect(esFalloDeRed(error)).toBe(true);
+    expect(mensajeDeError(error)).toBe('Sin conexión con la API.');
+  });
+});
+
+describe('mensajeDeError', () => {
+  test('un error de la API muestra su código y su mensaje', () => {
+    const error = new ErrorApi(401, 'Token inválido o expirado');
+    expect(esFalloDeRed(error)).toBe(false);
+    expect(mensajeDeError(error)).toBe('Error 401: Token inválido o expirado');
+  });
+
+  test('un error desconocido muestra su mensaje', () => {
+    expect(mensajeDeError(new Error('boom'))).toBe('boom');
+    expect(mensajeDeError('texto')).toBe('Error desconocido.');
   });
 });
