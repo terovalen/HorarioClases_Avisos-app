@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "read": {
+      "**/.env*": "deny",
+      "**/*.pem": "deny",
+      "**/*.key": "deny",
+      "**/*firebase-adminsdk*.json": "deny",
+      "**/*.keystore": "deny",
+      "**/*.jks": "deny",
+      ".claude/**": "deny"
+    },
+    "edit": {
+      "**/.env*": "deny",
+      "**/*.pem": "deny",
+      "**/*.key": "deny",
+      "**/*firebase-adminsdk*.json": "deny",
+      "**/*.keystore": "deny",
+      "**/*.jks": "deny",
+      ".claude/**": "deny",
+      "opencode.json": "deny",
+      "AGENTS.md": "deny",
+      "CLAUDE.md": "deny"
+    },
+    "bash": {
+      "sudo *": "deny",
+      "curl *": "deny",
+      "wget *": "deny",
+      "rm -rf *": "deny",
+      "git push --force*": "deny",
+      "git push -f*": "deny",
+      "git reset --hard*": "deny",
+      "vercel *": "deny",
+      "eas *": "deny",
+      "git push*": "ask",
+      "npm install*": "ask",
+      "npm i *": "ask",
+      "npm uninstall*": "ask",
+      "npx expo install*": "ask",
+      "*": "allow"
+    },
+    "webfetch": "deny"
+  }
+}

@@ -1,0 +1,30 @@
+node_modules/
+.expo/
+dist/
+coverage/
+expo/
+*.log
+.DS_Store
+
+# Secretos: nunca versionar (env.example sí, no lleva punto delante)
+.env*
+!env.example
+
+# Claves y cuentas de servicio (defensa extra, la regla principal está en la IA)
+*.pem
+*.key
+*.keystore
+*.jks
+*firebase-adminsdk*.json
+
+# Configuración local de la IA
+.claude/settings.local.json
+
+# Salida nativa temporal
+.k/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+web-build/

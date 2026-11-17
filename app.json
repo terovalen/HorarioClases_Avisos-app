@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Horario de clases",
+    "slug": "38-horario-de-clases",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "horario38",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "bundleIdentifier": "com.equipo38.horarioclases",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Se usa tu ubicación únicamente para avisarte cuándo salir hacia el campus."
+      }
+    },
+    "android": {
+      "package": "com.equipo38.horarioclases",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      ["expo-router", { "root": "app" }],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Se usa tu ubicación únicamente para avisarte cuándo salir hacia el campus."
+        }
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-notifications"
+    ],
+    "extra": {}
+  }
+}
