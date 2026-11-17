@@ -119,6 +119,29 @@ si no se entiende, no se entrega.
   `eliminarMateria` en `use-acciones-semana.ts` con validación de nombre
   duplicado.
 
+## Entrada 7 · 2026-11-17 · Quitar boton sincronizar, banner conexion, edicion solo hora
+
+- **Propósito:** corregir problemas reportados desde el iPhone:
+  (1) no debería haber botón de sincronizar manual (no está en las rúbricas);
+  (2) cuando no hay conexión debe aparecer un aviso rojo persistente que se
+  quede hasta que vuelva la conexión; (3) en Semana, al dejar presionado un
+  bloque solo debe aparecer «Editar hora (exacta)», no «Editar bloque
+  completo» (eso ya está en Gestionar materias); (4) agregar más colores al
+  selector.
+- **Evidencia:** usuario reportó que no quiere botón de sincronizar manual;
+  que el aviso «sin conexión» debería ser persistente; que en Semana solo
+  quiere editar la hora.
+- **Validación:** `npm run check` en verde (82 pruebas, typecheck + lint +
+  formato + pruebas).
+- **Decisión:** (1) se eliminó el botón «🔄 Sincronizar ahora» de Ajustes;
+  (2) se agregó `BannerConexion` que hace ping a `/api/health` cada 10s y
+  muestra un banner rojo persistente cuando no hay conexión, y se quita solo
+  cuando vuelve; (3) en `menu-bloque.tsx` se eliminó el botón «Editar bloque
+  completo» y solo queda «✏️ Editar hora (exacta)»; (4) se agregaron más
+  colores a `PALETA_COLORES` en `validaciones-materia.ts`; (5) se arregló
+  `Materias.tsx` para que cargue las materias al montar (antes aparecía vacío
+  aunque hubiera materias creadas).
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
