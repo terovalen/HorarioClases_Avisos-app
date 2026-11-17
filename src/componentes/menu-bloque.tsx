@@ -5,7 +5,7 @@ import { useState, type ReactElement } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatearHora, minutosAHora, minutosDelDia, parseHora } from '../logica/tiempo';
 import type { BloqueConMateria } from '../logica/tipos';
-import type { DatosEdicion, Resultado } from '../hooks/use-semana';
+import type { Resultado } from '../hooks/use-semana';
 import { EditorHoras } from './editor-horas';
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
-  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>;
+  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alCerrar: () => void;
 };
 
@@ -185,22 +185,12 @@ function useAccionesHoras(
 /** Acción de edición completa del bloque. */
 function useAccionEdicionCompleta(
   bloque: BloqueConMateria | null,
-  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>,
+  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void,
   alCerrar: () => void,
 ) {
   const abrirEdicionCompleta = (): void => {
     if (!bloque) return;
-    void alEditarBloque({
-      id: bloque.bloque.id,
-      dia: bloque.bloque.dia,
-      hora_inicio: bloque.bloque.hora_inicio,
-      hora_fin: bloque.bloque.hora_fin,
-      materia_id: bloque.bloque.materia_id,
-      nombre: bloque.materia.nombre,
-      docente: bloque.materia.docente,
-      salon: bloque.materia.salon,
-      color: bloque.materia.color,
-    });
+    alAbrirEdicionCompleta(bloque);
     alCerrar();
   };
 
@@ -273,7 +263,7 @@ export function MenuBloque({
   alEliminar,
   alAjustarFin,
   alEditarHoras,
-  alEditarBloque,
+  alAbrirEdicionCompleta,
   alCerrar,
 }: Props): ReactElement {
   const estado = useEstadoMenu();
@@ -286,7 +276,7 @@ export function MenuBloque({
   );
   const accionEdicionCompleta = useAccionEdicionCompleta(
     bloque,
-    alEditarBloque,
+    alAbrirEdicionCompleta,
     alCerrar,
   );
   const accionEliminar = useAccionEliminar(bloque, alEliminar, alCerrar);

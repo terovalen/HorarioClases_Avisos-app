@@ -14,6 +14,7 @@ import PantallaHoy from './screens/Hoy';
 import PantallaSemana from './screens/Semana';
 import PantallaAjustes from './screens/Ajustes';
 import PantallaNuevaMateria from './screens/NuevaMateria';
+import PantallaMaterias from './screens/Materias';
 import type { RootParamList, TabParamList } from './nav/tipos';
 
 const Stack = createStackNavigator<RootParamList>();
@@ -85,6 +86,11 @@ export function AppContenido(): ReactElement {
         <Stack.Screen
           name="NuevaMateria"
           component={PantallaNuevaMateria}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Materias"
+          component={PantallaMaterias}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -4,6 +4,7 @@ export type RootParamList = {
   Tabs: undefined;
   Carga: undefined;
   NuevaMateria: { id?: string; bloque?: string } | undefined;
+  Materias: undefined;
 };
 
 export type TabParamList = {

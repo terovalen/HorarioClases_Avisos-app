@@ -210,6 +210,14 @@ export default function PantallaAjustes(): ReactElement {
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <Text style={styles.titulo}>Ajustes</Text>
         <BotonAvisos />
+        <Pressable
+          style={styles.botonGestionarMaterias}
+          onPress={() => navigation.navigate('Materias')}
+          accessibilityRole="button"
+          accessibilityLabel="Gestionar materias"
+        >
+          <Text style={styles.botonGestionarMateriasTexto}>📚 Gestionar materias</Text>
+        </Pressable>
         <PruebaConexion />
         <SeccionCampus
           ajustes={ajustes}
@@ -266,4 +274,14 @@ const styles = StyleSheet.create({
   mensaje: { color: '#14532d', fontWeight: '600', marginTop: 8 },
   peligro: { backgroundColor: '#fee2e2' },
   textoPeligro: { color: '#b91c1c' },
+  botonGestionarMaterias: {
+    backgroundColor: '#6b7280',
+    borderRadius: 10,
+    padding: 12,
+    minHeight: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  botonGestionarMateriasTexto: { color: '#fff', fontWeight: '700', textAlign: 'center' },
 });

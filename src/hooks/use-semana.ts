@@ -6,13 +6,20 @@ import {
   useCambiosSemana,
   useEdicionBloqueCompleto,
   useEdicionHoras,
+  useGestionMateria,
   type DatosCrear,
   type DatosEdicion,
+  type DatosEdicionMateria,
   type Resultado,
 } from './use-acciones-semana';
 import type { BloqueConMateria, EstadoPantalla } from '../logica/tipos';
 
-export type { DatosCrear, DatosEdicion, Resultado } from './use-acciones-semana';
+export type {
+  DatosCrear,
+  DatosEdicion,
+  DatosEdicionMateria,
+  Resultado,
+} from './use-acciones-semana';
 
 /** Hook de la pantalla «Semana»: filas, estado y todas las acciones. */
 export function useSemana(): {
@@ -25,6 +32,8 @@ export function useSemana(): {
   editarBloque: (datos: DatosEdicion) => Promise<Resultado>;
   eliminarBloqueActual: (id: string) => Promise<void>;
   eliminarMateriaCompleta: (id: string) => Promise<void>;
+  editarMateria: (id: string, datos: DatosEdicionMateria) => Promise<Resultado>;
+  eliminarMateria: (id: string) => Promise<void>;
 } {
   const [filas, setFilas] = useState<BloqueConMateria[]>([]);
   const [estado, setEstado] = useState<EstadoPantalla>('cargando');
@@ -50,6 +59,8 @@ export function useSemana(): {
   const { editarBloque } = useEdicionBloqueCompleto(recargar);
   const { eliminarBloqueActual, eliminarMateriaCompleta } = useBorradoSemana(recargar);
 
+  const { editarMateria, eliminarMateria } = useGestionMateria(recargar);
+
   return {
     filas,
     estado,
@@ -60,5 +71,7 @@ export function useSemana(): {
     editarBloque,
     eliminarBloqueActual,
     eliminarMateriaCompleta,
+    editarMateria,
+    eliminarMateria,
   };
 }

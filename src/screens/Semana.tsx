@@ -98,7 +98,7 @@ type PropsMenuBloqueSemana = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
-  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>;
+  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alCerrar: () => void;
 };
 
@@ -114,7 +114,7 @@ function CuerpoMenuBloqueSemana(props: PropsMenuBloqueSemana): ReactElement {
       alEliminar={props.alEliminar}
       alAjustarFin={props.alAjustarFin}
       alEditarHoras={props.alEditarHoras}
-      alEditarBloque={props.alEditarBloque}
+      alAbrirEdicionCompleta={props.alAbrirEdicionCompleta}
       alCerrar={props.alCerrar}
     />
   );
@@ -135,6 +135,7 @@ type PropsCuerpoModales = {
     hora_fin: string,
   ) => Promise<Resultado>;
   alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>;
+  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alEliminar: (id: string) => Promise<void>;
   alCerrarHueco: () => void;
   alCerrarMenu: () => void;
@@ -169,9 +170,9 @@ function CuerpoModalesSemana(props: PropsCuerpoModales): ReactElement {
         alEliminar={props.alEliminar}
         alAjustarFin={props.alAjustarFin}
         alEditarHoras={props.alEditarHoras}
-        alEditarBloque={(datos) => {
-          props.setBloqueEditando(null);
-          return props.alEditarBloque(datos);
+        alAbrirEdicionCompleta={(bloque) => {
+          props.setBloqueEditando(bloque);
+          props.alCerrarMenu();
         }}
         alCerrar={props.alCerrarMenu}
       />
@@ -249,6 +250,9 @@ type PropsCuerpoPantalla = {
 function CuerpoPantallaSemana(props: PropsCuerpoPantalla): ReactElement {
   const { bloque: bloqueEditando, setBloque: setBloqueEditando } =
     useEstadoEdicionBloque();
+  const alAbrirEdicionCompleta = (bloque: BloqueConMateria): void => {
+    setBloqueEditando(bloque);
+  };
   return (
     <View style={styles.base}>
       <CabeceraYCrearSemana
@@ -278,6 +282,7 @@ function CuerpoPantallaSemana(props: PropsCuerpoPantalla): ReactElement {
         alAjustarFin={props.ajustarFin}
         alEditarHoras={props.editarHoras}
         alEditarBloque={props.editarBloque}
+        alAbrirEdicionCompleta={alAbrirEdicionCompleta}
         alEliminar={props.eliminarBloqueActual}
         alCerrarHueco={() => props.setHueco(null)}
         alCerrarMenu={() => props.setMenuId(null)}

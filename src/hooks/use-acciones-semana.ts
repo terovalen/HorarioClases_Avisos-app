@@ -269,6 +269,59 @@ export function useBorradoSemana(recargar: () => void): {
   return { eliminarBloqueActual, eliminarMateriaCompleta };
 }
 
+/** Datos para editar una materia existente. */
+export type DatosEdicionMateria = {
+  nombre: string;
+  docente: string | null;
+  salon: string | null;
+  color: string;
+};
+
+/** Editar o eliminar una materia existente. */
+export function useGestionMateria(recargar: () => void): {
+  editarMateria: (id: string, datos: DatosEdicionMateria) => Promise<Resultado>;
+  eliminarMateria: (id: string) => Promise<void>;
+} {
+  const editarMateria = useCallback(
+    async (id: string, datos: DatosEdicionMateria): Promise<Resultado> => {
+      const valido = validarMateria(datos);
+      if (!valido.ok) return valido;
+
+      const duplicada = listarMaterias().find(
+        (m) => m.id !== id && m.nombre === datos.nombre,
+      );
+      if (duplicada) {
+        return { ok: false, errores: ['Ya existe una materia con ese nombre.'] };
+      }
+
+      const materiaActual = materiaPorId(id);
+      if (!materiaActual) return { ok: false, errores: ['La materia ya no existe.'] };
+
+      vibrar();
+      await aplicar(recargar, () => {
+        actualizarMateria(id, datos);
+      });
+      return OK;
+    },
+    [recargar],
+  );
+
+  const eliminarMateria = useCallback(
+    async (id: string): Promise<void> => {
+      await aplicar(recargar, async () => {
+        for (const bloque of bloquesDeMateria(id)) {
+          await cancelarAvisoDeBloque(bloque.id);
+          eliminarBloque(bloque.id);
+        }
+        eliminarMateriaRepo(id);
+      });
+    },
+    [recargar],
+  );
+
+  return { editarMateria, eliminarMateria };
+}
+
 function validarCreacion(datos: DatosCrear): Resultado | null {
   const bloque = {
     dia: datos.dia,
