@@ -30,6 +30,35 @@ si no se entiende, no se entrega.
   al programar avisos muestran su causa real y no abortan el resto de la
   sincronización.
 
+## Entrada 3 · 2026-11-17 · Edición exacta de horas, botón de avisos y sincronización tolerante a fallos
+
+- **Propósito:** resolver lo reportado desde el iPhone: la sincronización
+  terminaba en «Sincronizado con errores · Error 500 · enviados 0 · recibidos
+  0», en «Semana» no había botón para añadir un bloque ni forma de escribir la
+  hora exacta (07:15, 07:30), y no había ningún botón «Activar avisos
+  semanales».
+- **Evidencia:** captura del mensaje de sincronización con `Error 500` y
+  `enviados 0 · recibidos 0`; la pestaña «Comprobar conexión» sí respondía
+  (`/api/health` es una ruta que no usa Firebase). En la API, `/api/health`
+  devolvía `firebase: "no-carga"` con `ERR_REQUIRE_ESM` y todas las rutas con
+  Firebase respondían 500. La app pedía `/api/ajustes/horario` como si
+  devolviera un listado y esa ruta devuelve el documento único de ajustes.
+- **Validación:** `npm run check` en verde (82 pruebas, cobertura 97 % de
+  sentencias). La API se validó de punta a punta contra
+  `https://horario-clases-avisos-api.vercel.app` (registro → `PUT
+/api/materia` → `PUT /api/bloque` con `07:15`/`08:45` → `GET /api/bloque` →
+  `GET /api/auth/yo`, todo 200) y en local con el emulador de Node 26
+  (`--no-experimental-require-module`). La verificación en el iPhone queda a
+  cargo del equipo (pasos en la respuesta de la IA).
+- **Decisión:** (1) la sincronización deja de abortar en el primer fallo: cada
+  ruta y la programación de avisos van por separado y el resumen muestra
+  cuántos elementos se enviaron y recibieron; (2) `/api/ajustes/horario` se
+  trata como documento único (`src/servicios/sincro-guardado.ts`); (3) el
+  formulario de bloque y el menú del bloque (long-press) permiten escribir la
+  hora exacta en formato `HH:MM`, con atajos de duración de 30/60/90/120
+  minutos; (4) aparece el botón «🔔 Activar avisos semanales» en «Semana» y en
+  «Ajustes», que pide permiso y programa los avisos de todas las clases.
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
@@ -53,6 +82,11 @@ si no se entiende, no se entrega.
    muestran con su código y su mensaje real. Se añadió además el botón
    «Comprobar conexión» (GET `/api/health`) para distinguir red caída de API
    con fallo.
+6. **Fallo puntual que cancelaba todo.** La IA propuso que la sincronización
+   lanzara error al primer fallo de una ruta. Se corrigió: un fallo en
+   `/api/materia` no puede impedir que `/api/bloque` y los ajustes se
+   sincronicen, y el mensaje final informa cuántos elementos se enviaron y
+   recibieron además del error.
 
 > Los integrantes deben agregar aquí sus propios casos con fecha y evidencia
 > (captura o enlace al diff) a medida que trabajan.
