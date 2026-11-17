@@ -59,6 +59,24 @@ si no se entiende, no se entrega.
   minutos; (4) aparece el botón «🔔 Activar avisos semanales» en «Semana» y en
   «Ajustes», que pide permiso y programa los avisos de todas las clases.
 
+## Entrada 4 · 2026-11-17 · 404 en sincronización, docente/salón, «sal ya» con clase vigente
+
+- **Propósito:** corregir los problemas reportados desde el iPhone:
+  (1) «Sincronizado con errores · Error 404: El bloque no existe» al enviar un
+  bloque marcado para borrar que el servidor ya no tiene; (2) no había campos
+  para docente y salón al crear una materia; (3) el banner «sal ya» aparecía
+  aunque la clase ya hubiera terminado.
+- **Evidencia:** mensaje de sincronización con `Error 404` y `enviado 0`;
+  formulario sin campos de docente/salón; banner «sal ya» a las 15:00 para una
+  clase de las 7:30 ya pasada.
+- **Validación:** `npm run check` en verde (82 pruebas).
+- **Decisión:** (1) en `enviarPendientes`, un 404 al borrar se trata como
+  borrado confirmado: se purga localmente y se cuenta como enviado sin marcar
+  error; (2) se agregan campos de docente y salón al formulario de materia
+  nueva y se envían en `DatosCrear.nueva`; (3) `BannerSalYa` recibe
+  `hayClasePendiente` y solo muestra «sal ya» cuando hay una clase hoy que aún
+  no ha terminado (próxima o en curso).
+
 ## Casos en que se rechazó o corrigió lo propuesto por la IA (mínimo 3)
 
 1. **Tokens de sesión.** La IA propuso guardar `token` y `refreshToken` en
