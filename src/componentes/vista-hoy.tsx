@@ -20,6 +20,7 @@ export function VistaHoy({
   const { distancia, verificar } = useDistanciaCampus();
   const ahora = useReloj();
   const ajustes = leerAjustes();
+  const hayClasePendiente = !!vista?.proxima || !!vista?.enCurso;
 
   if (estado !== 'listo' || !vista) {
     return <EstadoCarga estado={estado} alReintentar={recargar} />;
@@ -32,6 +33,7 @@ export function VistaHoy({
         distanciaMetros={distancia}
         minutosAviso={ajustes.minutos_aviso}
         campusConfigurado={ajustes.campus_lat !== null}
+        hayClasePendiente={hayClasePendiente}
       />
       <FilaBotones
         verificar={verificar}

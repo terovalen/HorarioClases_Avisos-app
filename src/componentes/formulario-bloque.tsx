@@ -25,11 +25,13 @@ function armarDatos(
   hora_fin: string,
   materiaId: string,
   nombre: string,
+  docente: string | null,
+  salon: string | null,
   color: string,
 ): DatosCrear {
   const datos: DatosCrear = { dia, hora_inicio, hora_fin };
   if (materiaId === 'nueva') {
-    datos.nueva = { nombre, docente: null, salon: null, color };
+    datos.nueva = { nombre, docente, salon, color };
   } else {
     datos.materia_id = materiaId;
   }
@@ -40,6 +42,8 @@ function armarDatos(
 function useEstadoFormulario(hora: number, minuto: number) {
   const [materiaId, setMateriaId] = useState<string>('');
   const [nombre, setNombre] = useState('');
+  const [docente, setDocente] = useState<string | null>(null);
+  const [salon, setSalon] = useState<string | null>(null);
   const [color, setColor] = useState<string>(PALETA_COLORES[0] ?? '#2563eb');
   const [errores, setErrores] = useState<string[]>([]);
   const [ocupado, setOcupado] = useState(false);
@@ -60,6 +64,10 @@ function useEstadoFormulario(hora: number, minuto: number) {
     setMateriaId,
     nombre,
     setNombre,
+    docente,
+    setDocente,
+    salon,
+    setSalon,
     color,
     setColor,
     errores,
@@ -108,6 +116,10 @@ function ControlesFormulario(props: {
       alCambiarMateria={e.setMateriaId}
       nombre={e.nombre}
       alCambiarNombre={e.setNombre}
+      docente={e.docente}
+      alCambiarDocente={e.setDocente}
+      salon={e.salon}
+      alCambiarSalon={e.setSalon}
       color={e.color}
       alCambiarColor={e.setColor}
       inicio={e.inicio}
@@ -137,6 +149,33 @@ function ContenidoFormulario(props: {
   );
 }
 
+/** Crea el callback de guardar para el formulario, ya con los datos armados. */
+function crearGuardar(
+  dia: number,
+  estado: ReturnType<typeof useEstadoFormulario>,
+  alGuardar: (datos: DatosCrear) => Promise<Resultado>,
+  alCerrar: () => void,
+): () => void {
+  return (): void => {
+    void enviarBloque(
+      armarDatos(
+        dia,
+        estado.inicio.trim(),
+        estado.fin.trim(),
+        estado.materiaId,
+        estado.nombre,
+        estado.docente,
+        estado.salon,
+        estado.color,
+      ),
+      alGuardar,
+      alCerrar,
+      estado.setOcupado,
+      estado.setErrores,
+    );
+  };
+}
+
 export function FormularioBloque({
   visible,
   dia,
@@ -147,23 +186,7 @@ export function FormularioBloque({
   alCerrar,
 }: Props): ReactElement {
   const estado = useEstadoFormulario(hora, minuto);
-
-  const guardar = (): void => {
-    void enviarBloque(
-      armarDatos(
-        dia,
-        estado.inicio.trim(),
-        estado.fin.trim(),
-        estado.materiaId,
-        estado.nombre,
-        estado.color,
-      ),
-      alGuardar,
-      alCerrar,
-      estado.setOcupado,
-      estado.setErrores,
-    );
-  };
+  const guardar = crearGuardar(dia, estado, alGuardar, alCerrar);
 
   return (
     <Modal

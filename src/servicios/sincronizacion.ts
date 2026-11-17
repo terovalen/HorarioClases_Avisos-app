@@ -1,7 +1,7 @@
 /** Sincronización idempotente (sección 9.3): enviar pendientes y traer cambios.
  *  La app escribe primero en SQLite (pending = 1); la sincronización corre al
  *  abrir la app, tras cada cambio y manualmente desde Ajustes. */
-import { esFalloDeRed, mensajeDeError, peticion } from '../api/cliente';
+import { ErrorApi, esFalloDeRed, mensajeDeError, peticion } from '../api/cliente';
 import { siguienteCursor, tipoDeEscritura } from '../logica/sincronizacion-logica';
 import type { DocumentoRemoto } from '../logica/sincronizacion-logica';
 import {
@@ -157,6 +157,17 @@ async function enviarPendientes(
       }
       enviados++;
     } catch (error) {
+      // Si el servidor dice que el recurso ya no existe (404 al borrar), el
+      // borrado se confirmó del otro lado: purgar localmente y seguir.
+      if (
+        error instanceof ErrorApi &&
+        error.estado === 404 &&
+        tipoDeEscritura(fila) === 'borrar'
+      ) {
+        purgar(recurso, fila.id);
+        enviados++;
+        continue;
+      }
       registrarError(r, error);
     }
   }

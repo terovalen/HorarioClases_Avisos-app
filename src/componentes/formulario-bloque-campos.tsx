@@ -111,6 +111,10 @@ export function CamposMateria(props: {
   materiaId: string;
   nombre: string;
   alCambiarNombre: (v: string) => void;
+  docente: string | null;
+  alCambiarDocente: (v: string) => void;
+  salon: string | null;
+  alCambiarSalon: (v: string) => void;
   color: string;
   alCambiarColor: (v: string) => void;
 }): ReactElement | null {
@@ -119,6 +123,10 @@ export function CamposMateria(props: {
     <CamposNuevaMateria
       nombre={props.nombre}
       alCambiarNombre={props.alCambiarNombre}
+      docente={props.docente}
+      alCambiarDocente={props.alCambiarDocente}
+      salon={props.salon}
+      alCambiarSalon={props.alCambiarSalon}
       color={props.color}
       alCambiarColor={props.alCambiarColor}
     />
@@ -162,24 +170,19 @@ export function ListaErrores({ errores }: { errores: string[] }): ReactElement |
   );
 }
 
-/** Controles del formulario: materia, horas, duración, errores y botones. */
-export function CuerpoFormulario(props: {
+/** Selector de materia + campos de materia nueva, agrupados. */
+function BloqueMateriaForm(props: {
   materias: Materia[];
   materiaId: string;
   alCambiarMateria: (id: string) => void;
   nombre: string;
   alCambiarNombre: (v: string) => void;
+  docente: string | null;
+  alCambiarDocente: (v: string) => void;
+  salon: string | null;
+  alCambiarSalon: (v: string) => void;
   color: string;
   alCambiarColor: (v: string) => void;
-  inicio: string;
-  fin: string;
-  alCambiarInicio: (v: string) => void;
-  alCambiarFin: (v: string) => void;
-  alCambiarDuracion: (d: number) => void;
-  errores: string[];
-  ocupado: boolean;
-  alGuardar: () => void;
-  alCerrar: () => void;
 }): ReactElement {
   return (
     <>
@@ -192,6 +195,54 @@ export function CuerpoFormulario(props: {
         materiaId={props.materiaId}
         nombre={props.nombre}
         alCambiarNombre={props.alCambiarNombre}
+        docente={props.docente}
+        alCambiarDocente={props.alCambiarDocente}
+        salon={props.salon}
+        alCambiarSalon={props.alCambiarSalon}
+        color={props.color}
+        alCambiarColor={props.alCambiarColor}
+      />
+    </>
+  );
+}
+/** Props de los controles del formulario. */
+export type CuerpoFormularioProps = {
+  materias: Materia[];
+  materiaId: string;
+  alCambiarMateria: (id: string) => void;
+  nombre: string;
+  alCambiarNombre: (v: string) => void;
+  docente: string | null;
+  alCambiarDocente: (v: string) => void;
+  salon: string | null;
+  alCambiarSalon: (v: string) => void;
+  color: string;
+  alCambiarColor: (v: string) => void;
+  inicio: string;
+  fin: string;
+  alCambiarInicio: (v: string) => void;
+  alCambiarFin: (v: string) => void;
+  alCambiarDuracion: (d: number) => void;
+  errores: string[];
+  ocupado: boolean;
+  alGuardar: () => void;
+  alCerrar: () => void;
+};
+
+/** Controles del formulario: materia, horas, duración, errores y botones. */
+export function CuerpoFormulario(props: CuerpoFormularioProps): ReactElement {
+  return (
+    <>
+      <BloqueMateriaForm
+        materias={props.materias}
+        materiaId={props.materiaId}
+        alCambiarMateria={props.alCambiarMateria}
+        nombre={props.nombre}
+        alCambiarNombre={props.alCambiarNombre}
+        docente={props.docente}
+        alCambiarDocente={props.alCambiarDocente}
+        salon={props.salon}
+        alCambiarSalon={props.alCambiarSalon}
         color={props.color}
         alCambiarColor={props.alCambiarColor}
       />

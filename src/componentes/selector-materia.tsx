@@ -1,5 +1,5 @@
 /** Selector de materia del formulario: una existente o una nueva con
- *  nombre y color. */
+ *  nombre, docente, salón y color. */
 import { type ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PALETA_COLORES } from '../logica/validaciones-materia';
@@ -47,6 +47,10 @@ export function SelectorMateria({
 type PropsNueva = {
   nombre: string;
   alCambiarNombre: (v: string) => void;
+  docente: string | null;
+  alCambiarDocente: (v: string) => void;
+  salon: string | null;
+  alCambiarSalon: (v: string) => void;
   color: string;
   alCambiarColor: (v: string) => void;
 };
@@ -60,6 +64,20 @@ export function CamposNuevaMateria(props: PropsNueva): ReactElement {
         value={props.nombre}
         onChangeText={props.alCambiarNombre}
         accessibilityLabel="Nombre de la materia"
+      />
+      <TextInput
+        style={styles.campo}
+        placeholder="Docente (opcional)"
+        value={props.docente ?? ''}
+        onChangeText={props.alCambiarDocente}
+        accessibilityLabel="Docente de la materia"
+      />
+      <TextInput
+        style={styles.campo}
+        placeholder="Salón (opcional)"
+        value={props.salon ?? ''}
+        onChangeText={props.alCambiarSalon}
+        accessibilityLabel="Salón de la materia"
       />
       <View style={styles.fila}>
         {PALETA_COLORES.map((c) => (

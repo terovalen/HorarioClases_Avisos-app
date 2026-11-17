@@ -1,4 +1,7 @@
-/** Aviso «sal ya» según la distancia al campus (RF-06). */
+/** Aviso «sal ya» según la distancia al campus (RF-06).
+ *
+ *  Solo se muestra cuando hay una clase hoy que aún no termina (próxima o en
+ *  curso). Si la clase ya pasó, no tiene sentido decir «sal ya». */
 import { StyleSheet, Text, View } from 'react-native';
 import type { ReactElement } from 'react';
 import { convieneSalirYa } from '../logica/distancia';
@@ -7,18 +10,30 @@ type Props = {
   distanciaMetros: number | null;
   minutosAviso: number;
   campusConfigurado: boolean;
+  /** true cuando hay una clase hoy que aún no ha terminado. */
+  hayClasePendiente: boolean;
 };
 
 export function BannerSalYa({
   distanciaMetros,
   minutosAviso,
   campusConfigurado,
+  hayClasePendiente,
 }: Props): ReactElement | null {
   if (!campusConfigurado) {
     return (
       <View style={[styles.banner, styles.gris]}>
         <Text style={styles.texto}>
           Configura la ubicación del campus en Ajustes para avisos «sal ya».
+        </Text>
+      </View>
+    );
+  }
+  if (!hayClasePendiente) {
+    return (
+      <View style={[styles.banner, styles.gris]}>
+        <Text style={styles.texto}>
+          No tienes clases hoy pendientes: no aplica aviso «sal ya».
         </Text>
       </View>
     );
