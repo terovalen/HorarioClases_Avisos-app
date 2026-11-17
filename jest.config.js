@@ -1,6 +1,6 @@
 /** @type {import('jest').Config} */
 module.exports = {
-  preset: 'jest-expo',
+  preset: '@react-native/jest-preset',
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
   collectCoverageFrom: [
     'src/logica/**/*.ts',
