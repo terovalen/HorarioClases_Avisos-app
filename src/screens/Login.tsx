@@ -1,9 +1,5 @@
 /** Inicio de sesión / registro mediado por la API. */
-import {
-  useNavigation,
-  type NavigationProp,
-  CommonActions,
-} from '@react-navigation/native';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { useState, type ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
@@ -118,7 +114,7 @@ export default function PantallaLogin(): ReactElement {
     try {
       if (modoRegistro) await registrar(email, clave);
       else await iniciar(email, clave);
-      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Tabs' }] }));
+      navigation.navigate('Tabs');
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : 'No hay conexión con la API.');
     } finally {

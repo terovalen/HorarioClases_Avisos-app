@@ -1,9 +1,5 @@
 /** Ajustes: campus, minutos de aviso, avisos, sincronización y sesión (RF-04/RF-06). */
-import {
-  useNavigation,
-  type NavigationProp,
-  CommonActions,
-} from '@react-navigation/native';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { useState, type ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
@@ -246,13 +242,7 @@ export default function PantallaAjustes(): ReactElement {
           mensaje={mensaje}
           alActivarAvisos={() => void activarAvisos()}
           alSincronizar={() => void sincronizar()}
-          alSalir={() =>
-            void salir().then(() =>
-              navigation.dispatch(
-                CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] }),
-              ),
-            )
-          }
+          alSalir={() => void salir().then(() => navigation.navigate('Login'))}
         />
       </ScrollView>
     </KeyboardAvoidingView>

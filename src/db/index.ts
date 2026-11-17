@@ -4,68 +4,72 @@ import * as SQLite from 'expo-sqlite';
 
 let instancia: SQLite.SQLiteDatabase | null = null;
 
-const ESQUEMA_V1 = `
-CREATE TABLE IF NOT EXISTS materia (
-  id TEXT PRIMARY KEY,
-  nombre TEXT NOT NULL UNIQUE,
-  docente TEXT,
-  salon TEXT,
-  color TEXT NOT NULL DEFAULT '#2563eb',
-  remote_id TEXT,
-  updated_at TEXT,
-  deleted INTEGER DEFAULT 0,
-  pending INTEGER DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS bloque (
-  id TEXT PRIMARY KEY,
-  materia_id TEXT NOT NULL REFERENCES materia(id) ON DELETE CASCADE,
-  dia INTEGER NOT NULL CHECK (dia BETWEEN 1 AND 7),
-  hora_inicio TEXT NOT NULL,
-  hora_fin TEXT NOT NULL,
-  notificacion_id TEXT,
-  CHECK (hora_fin > hora_inicio),
-  remote_id TEXT,
-  updated_at TEXT,
-  deleted INTEGER DEFAULT 0,
-  pending INTEGER DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS ajustes (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
-  campus_lat REAL,
-  campus_lng REAL,
-  minutos_aviso INTEGER NOT NULL DEFAULT 15,
-  remote_id TEXT,
-  updated_at TEXT,
-  deleted INTEGER DEFAULT 0,
-  pending INTEGER DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS sincro (
-  recurso TEXT PRIMARY KEY,
-  desde TEXT
-);
-`;
+/** Cada tabla se crea por separado con CREATE TABLE IF NOT EXISTS, así es
+ *  seguro ejecutar siempre aunque la base de datos ya exista. */
+const ESQUEMA_TABLAS = [
+  `CREATE TABLE IF NOT EXISTS materia (
+    id TEXT PRIMARY KEY,
+    nombre TEXT NOT NULL UNIQUE,
+    docente TEXT,
+    salon TEXT,
+    color TEXT NOT NULL DEFAULT '#2563eb',
+    remote_id TEXT,
+    updated_at TEXT,
+    deleted INTEGER DEFAULT 0,
+    pending INTEGER DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS bloque (
+    id TEXT PRIMARY KEY,
+    materia_id TEXT NOT NULL REFERENCES materia(id) ON DELETE CASCADE,
+    dia INTEGER NOT NULL CHECK (dia BETWEEN 1 AND 7),
+    hora_inicio TEXT NOT NULL,
+    hora_fin TEXT NOT NULL,
+    notificacion_id TEXT,
+    CHECK (hora_fin > hora_inicio),
+    remote_id TEXT,
+    updated_at TEXT,
+    deleted INTEGER DEFAULT 0,
+    pending INTEGER DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS ajustes (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    campus_lat REAL,
+    campus_lng REAL,
+    minutos_aviso INTEGER NOT NULL DEFAULT 15,
+    remote_id TEXT,
+    updated_at TEXT,
+    deleted INTEGER DEFAULT 0,
+    pending INTEGER DEFAULT 0
+  )`,
+  `CREATE TABLE IF NOT EXISTS sincro (
+    recurso TEXT PRIMARY KEY,
+    desde TEXT
+  )`,
+];
 
 export function abrirBase(): SQLite.SQLiteDatabase {
-  if (instancia) return instancia;
-  instancia = SQLite.openDatabaseSync('horario.db');
+  if (!instancia) {
+    instancia = SQLite.openDatabaseSync('horario.db');
+  }
   migrar(instancia);
   return instancia;
 }
 
-/** Migración por versión (PRAGMA user_version): hoy v1, mañana se agregan
- *  pasos nuevos sin destruir los datos del usuario. El esquema usa
- *  CREATE TABLE IF NOT EXISTS, así es seguro ejecutarlo siempre. */
+/** Migración por versión: crea todas las tablas si faltan (idempotente).
+ *  Se ejecuta en cada apertura para recuperar bases de datos dañadas. */
 function migrar(db: SQLite.SQLiteDatabase): void {
-  const fila = db.getFirstSync<{ user_version: number }>('PRAGMA user_version');
-  const version = fila?.user_version ?? 0;
-  db.execSync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
-  if (version < 1) {
-    db.execSync(ESQUEMA_V1);
-    db.execSync('PRAGMA user_version = 1;');
+  try {
+    db.execSync('PRAGMA foreign_keys = ON;');
+  } catch {
+    // PRAGMA puede fallar en algunos dispositivos; no bloquea.
   }
-  // Asegurar que existan todas las tablas aunque la base de datos ya exista
-  // desde una versión previa (CREATE TABLE IF NOT EXISTS es idempotente).
-  db.execSync(ESQUEMA_V1);
+  for (const sentencia of ESQUEMA_TABLAS) {
+    try {
+      db.execSync(sentencia);
+    } catch {
+      // Cada CREATE TABLE IF NOT EXISTS es independiente; una falla no detiene las demás.
+    }
+  }
 }
 
 /** Solo para pruebas. */
