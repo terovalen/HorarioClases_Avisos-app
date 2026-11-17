@@ -7,5 +7,8 @@ export function apiUrl(): string {
       'Configura EXPO_PUBLIC_API_URL (copia env.example a .env con la URL de tu API en Vercel).',
     );
   }
-  return url.replace(/\/$/, '');
+  const normalizada = url.replace(/\/$/, '');
+  // eslint-disable-next-line no-console
+  console.log(`[API] URL resuelta: ${normalizada}`);
+  return normalizada;
 }

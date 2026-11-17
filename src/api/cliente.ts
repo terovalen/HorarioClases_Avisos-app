@@ -41,11 +41,23 @@ async function lanzar(ruta: string, opciones: Opciones): Promise<Response> {
   if (opciones.conToken && sesion) {
     cabeceras['Authorization'] = `Bearer ${sesion.token}`;
   }
-  return fetch(`${apiUrl()}${ruta}`, {
-    method: opciones.metodo ?? 'GET',
-    headers: cabeceras,
-    body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
-  });
+  const urlCompleta = `${apiUrl()}${ruta}`;
+  // eslint-disable-next-line no-console
+  console.log(`[API] ${opciones.metodo ?? 'GET'} ${urlCompleta}`);
+  try {
+    return await fetch(urlCompleta, {
+      method: opciones.metodo ?? 'GET',
+      headers: cabeceras,
+      body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(`[API] Error de red en ${urlCompleta}:`, error);
+    throw new ErrorApi(
+      0,
+      `No se pudo conectar con la API (${urlCompleta}). Verifica tu conexión a internet.`,
+    );
+  }
 }
 
 /** Una sola renovación: si falla se cierra la sesión y hay que volver a entrar. */
