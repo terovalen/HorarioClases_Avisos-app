@@ -10,7 +10,7 @@ import type { RootParamList } from '../nav/tipos';
 
 export default function PantallaMaterias({ navigation }: Props): ReactElement {
   const { editarMateria, eliminarMateria, recargar } = useSemana();
-  const [materias, setMaterias] = useState<FilaMateriaRepo[]>([]);
+  const [materias, setMaterias] = useState<FilaMateriaRepo[]>(listarMaterias());
   const [menuId, setMenuId] = useState<string | null>(null);
 
   const recargarMaterias = useCallback((): void => {

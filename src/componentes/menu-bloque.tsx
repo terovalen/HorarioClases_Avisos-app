@@ -17,7 +17,6 @@ type Props = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
-  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alCerrar: () => void;
 };
 
@@ -87,7 +86,6 @@ function PanelEdicion(props: {
 /** Acciones rápidas del menú. */
 function AccionesRapidas(props: {
   alAbrirEditor: () => void;
-  alAbrirEdicionCompleta: () => void;
   alCambiarFinDelta: (delta: number) => void;
   alEliminar: () => void;
 }): ReactElement {
@@ -97,11 +95,6 @@ function AccionesRapidas(props: {
         texto="✏️ Editar hora (exacta)"
         etiqueta="Editar la hora de inicio y de fin"
         alPulsar={props.alAbrirEditor}
-      />
-      <BotonAccion
-        texto="✏️ Editar bloque completo"
-        etiqueta="Editar materia, horas, docente, salón y color"
-        alPulsar={props.alAbrirEdicionCompleta}
       />
       <BotonAccion
         texto="Fin +30 min"
@@ -182,21 +175,6 @@ function useAccionesHoras(
   return { cambiarFin, abrirEditor, guardarHoras };
 }
 
-/** Acción de edición completa del bloque. */
-function useAccionEdicionCompleta(
-  bloque: BloqueConMateria | null,
-  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void,
-  alCerrar: () => void,
-) {
-  const abrirEdicionCompleta = (): void => {
-    if (!bloque) return;
-    alAbrirEdicionCompleta(bloque);
-    alCerrar();
-  };
-
-  return { abrirEdicionCompleta };
-}
-
 /** Acción de eliminar. */
 function useAccionEliminar(
   bloque: BloqueConMateria | null,
@@ -216,18 +194,10 @@ function CuerpoMenuBloque(props: {
   bloque: BloqueConMateria;
   estado: ReturnType<typeof useEstadoMenu>;
   accionesHoras: ReturnType<typeof useAccionesHoras>;
-  accionEdicionCompleta: ReturnType<typeof useAccionEdicionCompleta>;
   accionEliminar: ReturnType<typeof useAccionEliminar>;
   alCerrar: () => void;
 }): ReactElement {
-  const {
-    bloque,
-    estado,
-    accionesHoras,
-    accionEdicionCompleta,
-    accionEliminar,
-    alCerrar,
-  } = props;
+  const { bloque, estado, accionesHoras, accionEliminar, alCerrar } = props;
   return (
     <View style={styles.caja}>
       <Text style={styles.titulo}>
@@ -248,7 +218,6 @@ function CuerpoMenuBloque(props: {
       ) : (
         <AccionesRapidas
           alAbrirEditor={accionesHoras.abrirEditor}
-          alAbrirEdicionCompleta={accionEdicionCompleta.abrirEdicionCompleta}
           alCambiarFinDelta={(delta) => void accionesHoras.cambiarFin(delta)}
           alEliminar={accionEliminar.eliminarActual}
         />
@@ -263,7 +232,6 @@ export function MenuBloque({
   alEliminar,
   alAjustarFin,
   alEditarHoras,
-  alAbrirEdicionCompleta,
   alCerrar,
 }: Props): ReactElement {
   const estado = useEstadoMenu();
@@ -272,11 +240,6 @@ export function MenuBloque({
     estado,
     alAjustarFin,
     alEditarHoras,
-    alCerrar,
-  );
-  const accionEdicionCompleta = useAccionEdicionCompleta(
-    bloque,
-    alAbrirEdicionCompleta,
     alCerrar,
   );
   const accionEliminar = useAccionEliminar(bloque, alEliminar, alCerrar);
@@ -290,7 +253,6 @@ export function MenuBloque({
           bloque={bloque}
           estado={estado}
           accionesHoras={accionesHoras}
-          accionEdicionCompleta={accionEdicionCompleta}
           accionEliminar={accionEliminar}
           alCerrar={alCerrar}
         />

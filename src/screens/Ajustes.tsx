@@ -11,11 +11,10 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { mensajeDeError } from '../api/cliente';
+import { BannerConexion } from '../componentes/banner-conexion';
 import { BotonAvisos } from '../componentes/boton-avisos';
 import { PruebaConexion } from '../componentes/prueba-conexion';
-import { ajustesPendientes, guardarAjustes, leerAjustes } from '../repositorios/ajustes';
-import { mensajeDeSincro, sincronizarTodo } from '../servicios/sincronizacion';
+import { guardarAjustes, leerAjustes } from '../repositorios/ajustes';
 import { useSesion } from '../servicios/sesion';
 import { margenMetros } from '../logica/distancia';
 import type { Ajustes } from '../logica/tipos';
@@ -112,66 +111,15 @@ function SeccionMinutos({
   );
 }
 
-function useAccionesAjustes(
-  ajustes: Ajustes,
-  guardar: (a: Ajustes) => void,
-  alMensaje: (m: string) => void,
-): {
-  usarMiUbicacion: () => Promise<void>;
-  sincronizar: () => Promise<void>;
-} {
-  const usarMiUbicacion = async (): Promise<void> => {
-    const permiso = await Location.requestForegroundPermissionsAsync();
-    if (!permiso.granted) {
-      alMensaje('Permiso de ubicación denegado: escribe latitud y longitud.');
-      return;
-    }
-    const posicion = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    guardar({
-      ...ajustes,
-      campus_lat: Number(posicion.coords.latitude.toFixed(6)),
-      campus_lng: Number(posicion.coords.longitude.toFixed(6)),
-    });
-  };
-
-  const sincronizar = async (): Promise<void> => {
-    try {
-      const r = await sincronizarTodo();
-      alMensaje(
-        `${mensajeDeSincro(r)} · enviados ${r.enviados} · recibidos ${r.recibidos}`,
-      );
-    } catch (error) {
-      alMensaje(mensajeDeError(error));
-    }
-  };
-
-  return { usarMiUbicacion, sincronizar };
-}
-
 function PieAjustes({
   mensaje,
-  alSincronizar,
   alSalir,
 }: {
   mensaje: string | null;
-  alSincronizar: () => void;
   alSalir: () => void;
 }): ReactElement {
   return (
     <>
-      <Pressable
-        style={styles.boton}
-        onPress={alSincronizar}
-        accessibilityRole="button"
-        accessibilityLabel="Sincronizar ahora"
-      >
-        <Text style={styles.botonTexto}>🔄 Sincronizar ahora</Text>
-      </Pressable>
-      {ajustesPendientes() ? (
-        <Text style={styles.nota}>Hay ajustes pendientes de sincronizar.</Text>
-      ) : null}
       {mensaje ? <Text style={styles.mensaje}>{mensaje}</Text> : null}
       <Pressable
         style={[styles.boton, styles.peligro]}
@@ -185,6 +133,29 @@ function PieAjustes({
   );
 }
 
+/** Acción de usar ubicación actual como campus (extraída para reducir líneas). */
+function usarMiUbicacion(
+  ajustes: Ajustes,
+  guardar: (nuevos: Ajustes) => void,
+  setMensaje: (m: string | null) => void,
+): () => Promise<void> {
+  return async (): Promise<void> => {
+    const permiso = await Location.requestForegroundPermissionsAsync();
+    if (!permiso.granted) {
+      setMensaje('Permiso de ubicación denegado: escribe latitud y longitud.');
+      return;
+    }
+    const posicion = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    guardar({
+      ...ajustes,
+      campus_lat: Number(posicion.coords.latitude.toFixed(6)),
+      campus_lng: Number(posicion.coords.longitude.toFixed(6)),
+    });
+  };
+}
+
 export default function PantallaAjustes(): ReactElement {
   const { salir } = useSesion();
   const navigation: NavigationProp<RootParamList> = useNavigation();
@@ -195,20 +166,17 @@ export default function PantallaAjustes(): ReactElement {
     setAjustes(nuevos);
     guardarAjustes(nuevos);
     setMensaje(
-      'Guardado en el teléfono. Pulsa «Sincronizar ahora» para enviarlo a la API.',
+      'Guardado en el teléfono. Se enviará a la API automáticamente cuando haya conexión.',
     );
   };
 
-  const { usarMiUbicacion, sincronizar } = useAccionesAjustes(
-    ajustes,
-    guardar,
-    setMensaje,
-  );
+  const alUsarMiUbicacion = usarMiUbicacion(ajustes, guardar, setMensaje);
 
   return (
     <KeyboardAvoidingView style={styles.base} behavior="padding">
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         <Text style={styles.titulo}>Ajustes</Text>
+        <BannerConexion />
         <BotonAvisos />
         <Pressable
           style={styles.botonGestionarMaterias}
@@ -222,7 +190,7 @@ export default function PantallaAjustes(): ReactElement {
         <SeccionCampus
           ajustes={ajustes}
           alGuardar={guardar}
-          alUsarMiUbicacion={() => void usarMiUbicacion()}
+          alUsarMiUbicacion={() => void alUsarMiUbicacion()}
         />
         <SeccionMinutos
           minutosAviso={ajustes.minutos_aviso}
@@ -230,7 +198,6 @@ export default function PantallaAjustes(): ReactElement {
         />
         <PieAjustes
           mensaje={mensaje}
-          alSincronizar={() => void sincronizar()}
           alSalir={() => void salir().then(() => navigation.navigate('Login'))}
         />
       </ScrollView>

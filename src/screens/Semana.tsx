@@ -1,21 +1,15 @@
 /** Vista semanal: grilla por días con gestos y modales (RF-02). */
 import { useState, type ReactElement } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, Modal } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CabeceraSemana } from '../componentes/cabecera-semana';
 import { GrillaDia } from '../componentes/grilla-dia';
 import { FormularioBloque } from '../componentes/formulario-bloque';
-import { FormularioEdicionBloque } from '../componentes/formulario-edicion-bloque';
 import { MenuBloque } from '../componentes/menu-bloque';
 import { BotonAvisos } from '../componentes/boton-avisos';
 import { EstadoCarga } from '../componentes/estado-carga';
 import { diaDeFecha, NOMBRES_DIAS } from '../logica/tiempo';
 import type { BloqueConMateria, Materia } from '../logica/tipos';
-import {
-  useSemana,
-  type DatosCrear,
-  type DatosEdicion,
-  type Resultado,
-} from '../hooks/use-semana';
+import { useSemana, type DatosCrear, type Resultado } from '../hooks/use-semana';
 import { listarMaterias } from '../repositorios/materias';
 
 function BotonCrearBloque({
@@ -66,28 +60,6 @@ function ModalCreacionBloque(props: PropsModalCreacion): ReactElement {
   );
 }
 
-type PropsModalEdicion = {
-  visible: boolean;
-  bloque: BloqueConMateria | null;
-  materias: Materia[];
-  alGuardar: (datos: DatosEdicion) => Promise<Resultado>;
-  alCerrar: () => void;
-};
-
-/** Modal de edición completa de un bloque existente. */
-function ModalEdicionBloque(props: PropsModalEdicion): ReactElement {
-  if (!props.visible || !props.bloque) return <Modal visible={false} />;
-  return (
-    <FormularioEdicionBloque
-      visible={true}
-      bloque={props.bloque}
-      materias={props.materias}
-      alGuardar={props.alGuardar}
-      alCerrar={props.alCerrar}
-    />
-  );
-}
-
 type PropsMenuBloqueSemana = {
   menuId: string | null;
   delDia: BloqueConMateria[];
@@ -98,7 +70,6 @@ type PropsMenuBloqueSemana = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
-  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alCerrar: () => void;
 };
 
@@ -114,7 +85,6 @@ function CuerpoMenuBloqueSemana(props: PropsMenuBloqueSemana): ReactElement {
       alEliminar={props.alEliminar}
       alAjustarFin={props.alAjustarFin}
       alEditarHoras={props.alEditarHoras}
-      alAbrirEdicionCompleta={props.alAbrirEdicionCompleta}
       alCerrar={props.alCerrar}
     />
   );
@@ -125,8 +95,6 @@ type PropsCuerpoModales = {
   dia: number;
   menuId: string | null;
   delDia: BloqueConMateria[];
-  bloqueEditando: BloqueConMateria | null;
-  setBloqueEditando: (b: BloqueConMateria | null) => void;
   alGuardar: (datos: DatosCrear) => Promise<Resultado>;
   alAjustarFin: (id: string, hora_fin: string) => Promise<Resultado>;
   alEditarHoras: (
@@ -134,8 +102,6 @@ type PropsCuerpoModales = {
     hora_inicio: string,
     hora_fin: string,
   ) => Promise<Resultado>;
-  alEditarBloque: (datos: DatosEdicion) => Promise<Resultado>;
-  alAbrirEdicionCompleta: (bloque: BloqueConMateria) => void;
   alEliminar: (id: string) => Promise<void>;
   alCerrarHueco: () => void;
   alCerrarMenu: () => void;
@@ -154,26 +120,12 @@ function CuerpoModalesSemana(props: PropsCuerpoModales): ReactElement {
         alGuardar={props.alGuardar}
         alCerrar={props.alCerrarHueco}
       />
-      <ModalEdicionBloque
-        visible={props.bloqueEditando !== null}
-        bloque={props.bloqueEditando}
-        materias={listarMaterias()}
-        alGuardar={(datos) => {
-          props.setBloqueEditando(null);
-          return props.alEditarBloque(datos);
-        }}
-        alCerrar={() => props.setBloqueEditando(null)}
-      />
       <CuerpoMenuBloqueSemana
         menuId={props.menuId}
         delDia={props.delDia}
         alEliminar={props.alEliminar}
         alAjustarFin={props.alAjustarFin}
         alEditarHoras={props.alEditarHoras}
-        alAbrirEdicionCompleta={(bloque) => {
-          props.setBloqueEditando(bloque);
-          props.alCerrarMenu();
-        }}
         alCerrar={props.alCerrarMenu}
       />
     </>
@@ -241,18 +193,12 @@ type PropsCuerpoPantalla = {
   setMenuId: (id: string | null) => void;
   ajustarFin: (id: string, hora_fin: string) => Promise<Resultado>;
   editarHoras: (id: string, hora_inicio: string, hora_fin: string) => Promise<Resultado>;
-  editarBloque: (datos: DatosEdicion) => Promise<Resultado>;
   eliminarBloqueActual: (id: string) => Promise<void>;
   crear: (datos: DatosCrear) => Promise<Resultado>;
 };
 
 /** Cuerpo de la pantalla Semana (extraído para cumplir límite de líneas). */
 function CuerpoPantallaSemana(props: PropsCuerpoPantalla): ReactElement {
-  const { bloque: bloqueEditando, setBloque: setBloqueEditando } =
-    useEstadoEdicionBloque();
-  const alAbrirEdicionCompleta = (bloque: BloqueConMateria): void => {
-    setBloqueEditando(bloque);
-  };
   return (
     <View style={styles.base}>
       <CabeceraYCrearSemana
@@ -276,25 +222,15 @@ function CuerpoPantallaSemana(props: PropsCuerpoPantalla): ReactElement {
         dia={props.dia}
         menuId={props.menuId}
         delDia={props.delDia}
-        bloqueEditando={bloqueEditando}
-        setBloqueEditando={setBloqueEditando}
         alGuardar={props.crear}
         alAjustarFin={props.ajustarFin}
         alEditarHoras={props.editarHoras}
-        alEditarBloque={props.editarBloque}
-        alAbrirEdicionCompleta={alAbrirEdicionCompleta}
         alEliminar={props.eliminarBloqueActual}
         alCerrarHueco={() => props.setHueco(null)}
         alCerrarMenu={() => props.setMenuId(null)}
       />
     </View>
   );
-}
-
-/** Estado del bloque que se está editando en los modales. */
-function useEstadoEdicionBloque() {
-  const [bloque, setBloque] = useState<BloqueConMateria | null>(null);
-  return { bloque, setBloque };
 }
 
 export default function PantallaSemana(): ReactElement {
@@ -305,7 +241,6 @@ export default function PantallaSemana(): ReactElement {
     crear,
     ajustarFin,
     editarHoras,
-    editarBloque,
     eliminarBloqueActual,
   } = useSemana();
   const [dia, setDia] = useState(diaDeFecha(new Date()));
@@ -334,7 +269,6 @@ export default function PantallaSemana(): ReactElement {
       setMenuId={setMenuId}
       ajustarFin={ajustarFin}
       editarHoras={editarHoras}
-      editarBloque={editarBloque}
       eliminarBloqueActual={eliminarBloqueActual}
       crear={crear}
     />

@@ -33,4 +33,10 @@ export const PALETA_COLORES = [
   '#9333ea',
   '#ea580c',
   '#0891b2',
+  '#6366f1',
+  '#a21caf',
+  '#eab308',
+  '#15803d',
+  '#b45309',
+  '#0891b2',
 ] as const;

@@ -68,7 +68,20 @@ function SelectorColor(props: {
   color: string;
   alCambiar: (v: string) => void;
 }): ReactElement {
-  const COLORES = ['#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#4f46e5', '#db2777'];
+  const COLORES = [
+    '#2563eb',
+    '#dc2626',
+    '#16a34a',
+    '#ca8a04',
+    '#4f46e5',
+    '#db2777',
+    '#0891b2',
+    '#6366f1',
+    '#a21caf',
+    '#eab308',
+    '#15803d',
+    '#b45309',
+  ];
   return (
     <>
       <Text style={styles.rotulo}>Color</Text>
