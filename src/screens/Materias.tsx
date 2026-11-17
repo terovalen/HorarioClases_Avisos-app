@@ -125,7 +125,7 @@ function FilaMateriaComponente(props: {
       </View>
       <Pressable
         style={styles.botonMenu}
-        onLongPress={alPulsarLargo}
+        onPress={alPulsarLargo}
         accessibilityRole="button"
         accessibilityLabel={`Menú de ${materia.nombre}`}
       >
@@ -168,11 +168,12 @@ const styles = StyleSheet.create({
   docente: { color: '#586272', fontSize: 13 },
   salon: { color: '#586272', fontSize: 13 },
   botonMenu: {
-    padding: 8,
-    minWidth: 40,
+    padding: 12,
+    minWidth: 56,
+    minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  botonMenuTexto: { fontSize: 18 },
+  botonMenuTexto: { fontSize: 20 },
   vacio: { color: '#586272', textAlign: 'center', padding: 40 },
 });

@@ -80,9 +80,9 @@ export function CamposNuevaMateria(props: PropsNueva): ReactElement {
         accessibilityLabel="Salón de la materia"
       />
       <View style={styles.fila}>
-        {PALETA_COLORES.map((c) => (
+        {PALETA_COLORES.map((c, i) => (
           <Pressable
-            key={c}
+            key={`color-${i}`}
             onPress={() => props.alCambiarColor(c)}
             style={[
               styles.color,

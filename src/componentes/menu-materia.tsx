@@ -86,9 +86,9 @@ function SelectorColor(props: {
     <>
       <Text style={styles.rotulo}>Color</Text>
       <View style={styles.filaColores}>
-        {COLORES.map((c) => (
+        {COLORES.map((c, i) => (
           <Pressable
-            key={c}
+            key={`color-${i}`}
             onPress={() => props.alCambiar(c)}
             style={[
               styles.color,
