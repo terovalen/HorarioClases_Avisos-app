@@ -9,7 +9,7 @@ import { useSemana, type Resultado } from '../hooks/use-semana';
 import type { RootParamList } from '../nav/tipos';
 
 export default function PantallaMaterias({ navigation }: Props): ReactElement {
-  const { editarMateria, eliminarMateria, recargar } = useSemana();
+  const { editarMateria, eliminarMateriaCompleta, recargar } = useSemana();
   const [materias, setMaterias] = useState<FilaMateriaRepo[]>(listarMaterias());
   const [menuId, setMenuId] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export default function PantallaMaterias({ navigation }: Props): ReactElement {
             menuId,
             setMenuId,
             editarMateria,
-            eliminarMateria,
+            eliminarMateriaCompleta,
             recargarYSet,
           )
         }
@@ -67,7 +67,7 @@ function renderFilaMateria(
       color: string;
     },
   ) => Promise<Resultado>,
-  eliminarMateria: (id: string) => Promise<void>,
+  eliminarMateriaCompleta: (id: string) => Promise<void>,
   recargarYSet: () => void,
 ): ReactElement {
   return (
@@ -87,7 +87,7 @@ function renderFilaMateria(
         return r;
       }}
       alEliminar={async () => {
-        await eliminarMateria(item.id);
+        await eliminarMateriaCompleta(item.id);
         setMenuId(null);
         recargarYSet();
       }}
