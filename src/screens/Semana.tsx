@@ -1,5 +1,6 @@
 /** Vista semanal: grilla por días con gestos y modales (RF-02). */
-import { useState, type ReactElement } from 'react';
+import { useState, useCallback, type ReactElement } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CabeceraSemana } from '../componentes/cabecera-semana';
 import { GrillaDia } from '../componentes/grilla-dia';
@@ -250,6 +251,14 @@ export default function PantallaSemana(): ReactElement {
   const cambiarDia = (delta: number): void => {
     setDia((actual) => ((actual - 1 + delta + 7) % 7) + 1);
   };
+
+  // Cada vez que se entra a la pantalla (incluyendo al volver de Materias),
+  // se recargan los datos para reflejar eliminaciones o cambios hechos fuera.
+  useFocusEffect(
+    useCallback((): void => {
+      recargar();
+    }, [recargar]),
+  );
 
   if (estado !== 'listo') {
     return <EstadoCarga estado={estado} alReintentar={recargar} />;
